@@ -102,4 +102,7 @@ function analyze(payload, workflow) {
 
 module.exports = {
   analyze,
+  classifyIntent,
+  buildPersonalization,
+  scoreUrgency,
 };

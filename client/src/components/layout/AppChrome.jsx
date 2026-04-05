@@ -1,60 +1,120 @@
-import React, { useState } from 'react';
-import Sidebar from './Sidebar';
-import { Search } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Bell,
+  ChevronLeft,
+  FolderGit2,
+  Home,
+  LayoutDashboard,
+  Menu,
+  Settings,
+  Sparkles,
+} from 'lucide-react';
 
-const AppChrome = ({ children }) => {
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
+const navItems = [
+  { label: 'Dashboard', icon: LayoutDashboard, active: true },
+  { label: 'Workflows', icon: FolderGit2 },
+  { label: 'Settings', icon: Settings },
+];
 
+function NavButton({ icon: Icon, label, active }) {
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: 'var(--color-ui-bg-panel)' }}>
-      {/* Sidebar: Left Navigation */}
-      <Sidebar isOpen={isSidebarOpen} toggle={() => setSidebarOpen(!isSidebarOpen)} />
+    <button className={`sidebar-link ${active ? 'is-active' : ''}`} type="button">
+      <Icon size={17} />
+      <span>{label}</span>
+    </button>
+  );
+}
 
-      {/* Main Content Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-        {/* Top Navbar */}
-        <header style={{
-          height: '64px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 var(--spacing-l)',
-          borderBottom: '1px solid var(--color-ui-border)',
-          backgroundColor: 'var(--color-ui-bg-base)',
-          zIndex: 10
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-s)' }}>
-            <span style={{ fontSize: 'var(--font-size-s)', color: 'var(--color-text-muted)', fontWeight: 600 }}>
-              Organization / Workspace / Dashboard
-            </span>
+function Sidebar({ open, onToggle, onBackHome }) {
+  return (
+    <aside className={`app-sidebar ${open ? 'is-open' : 'is-collapsed'}`}>
+      <div className="app-sidebar-inner">
+        <div className="sidebar-brand">
+          <div className="brand-lockup">
+            <div className="brand-mark">A</div>
+            {open && (
+              <div>
+                <p className="eyebrow">Workflow Ops</p>
+                <h2 className="brand-title">Hybrid Engine</h2>
+              </div>
+            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-m)' }}>
-            <button style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--spacing-xs)',
-              background: 'var(--color-ui-bg-panel)',
-              border: '1px solid var(--color-ui-border)',
-              padding: '6px 12px',
-              borderRadius: 'var(--border-radius-m)',
-              color: 'var(--color-text-muted)',
-              fontSize: 'var(--font-size-s)'
-            }}>
-              <Search size={14} />
-              <span style={{ marginRight: '24px' }}>Search...</span>
-              <kbd style={{ fontSize: '0.7rem', fontFamily: 'var(--font-family-data)', backgroundColor: 'var(--color-ui-border)', padding: '2px 4px', borderRadius: '4px' }}>⌘K</kbd>
+          <button className="icon-button subtle" type="button" onClick={onToggle}>
+            <ChevronLeft size={16} />
+          </button>
+        </div>
+
+        <button className="sidebar-home" type="button" onClick={onBackHome}>
+          <Home size={16} />
+          {open && <span>Back to landing page</span>}
+        </button>
+
+        <nav className="sidebar-nav">
+          {navItems.map((item) => (
+            <NavButton key={item.label} {...item} />
+          ))}
+        </nav>
+
+        <div className="sidebar-card">
+          {open && (
+            <>
+              <div className="sidebar-card-header">
+                <Sparkles size={14} />
+                Live routing
+              </div>
+              <p>
+                Track deployed templates, run simulations, and inspect AI decisions from one
+                consistent workspace.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+export default function AppChrome({ children, onBackHome }) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  return (
+    <div className="app-frame">
+      <Sidebar
+        open={sidebarOpen}
+        onToggle={() => setSidebarOpen((value) => !value)}
+        onBackHome={onBackHome}
+      />
+
+      <div className="app-main">
+        <header className="app-header">
+          <div className="app-header-left">
+            {!sidebarOpen && (
+              <button
+                className="icon-button subtle"
+                type="button"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu size={16} />
+              </button>
+            )}
+
+            <div>
+              <p className="eyebrow">Operations Console</p>
+              <h2 className="header-title">Workflow simulation dashboard</h2>
+            </div>
+          </div>
+
+          <div className="header-actions">
+            <div className="header-chip">API live</div>
+            <button className="icon-button" type="button" aria-label="Notifications">
+              <Bell size={16} />
             </button>
           </div>
         </header>
 
-        {/* Content Viewport */}
-        <main style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
-          {children}
-        </main>
+        <main className="app-content">{children}</main>
       </div>
     </div>
   );
-};
-
-export default AppChrome;
+}

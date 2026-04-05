@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import AppChrome from './components/layout/AppChrome';
 import { ContextView } from './components/layout/Views';
+import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 
 function App() {
-  const [currentView, setCurrentView] = useState('dashboard');
+  const [currentView, setCurrentView] = useState('landing');
+
+  if (currentView === 'landing') {
+    return <LandingPage onLaunch={() => setCurrentView('dashboard')} />;
+  }
 
   return (
-    <AppChrome>
+    <AppChrome onBackHome={() => setCurrentView('landing')}>
       <ContextView>
-        {currentView === 'dashboard' && <Dashboard />}
-        {/* Additional views would be routed here */}
+        <Dashboard />
       </ContextView>
     </AppChrome>
   );

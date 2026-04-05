@@ -1,187 +1,408 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MetricCard, ListingCard } from '../components/ui/Cards';
-import { Button } from '../components/ui/Cards'; // Actually Button is exported from Cards currently, wait let me check the file, yes I exported Button from Cards.jsx
+import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Activity,
+  AlertCircle,
+  Database,
+  Mail,
+  Play,
+  Server,
+  Sparkles,
+  X,
+  Zap,
+} from 'lucide-react';
+import { Button, MetricCard } from '../components/ui/Cards';
 import { DataTable } from '../components/ui/Table';
 import { FocusView } from '../components/layout/Views';
-import { Play, Sparkles, Server } from 'lucide-react';
 
-const Dashboard = () => {
+const INPUT_CLASS = 'dashboard-input';
+
+function Field({ label, badge, children }) {
+  return (
+    <label className="field">
+      <span className="field-label">
+        {label}
+        {badge ? <span className="field-badge">{badge}</span> : null}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function getStatusTone(status = '') {
+  if (status.includes('FAILED')) return 'is-danger';
+  if (status.includes('SIMULATED') || status.includes('SKIPPED')) return 'is-warning';
+  return 'is-success';
+}
+
+function getExecutionIcon(type = '') {
+  if (type === 'EMAIL') return <Mail size={14} />;
+  if (type === 'CRM') return <Database size={14} />;
+  return <Zap size={14} />;
+}
+
+export default function Dashboard() {
   const [workflows, setWorkflows] = useState([]);
-  const [scenarios, setScenarios] = useState([]);
-  const [activeSimulation, setActiveSimulation] = useState(null); // When not null, opens FocusView
+  const [activeSimulation, setActiveSimulation] = useState(null);
   const [simulationResult, setSimulationResult] = useState(null);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/workflows').then(r => r.json()),
-      fetch('/api/scenarios').then(r => r.json())
-    ]).then(([wf, sc]) => {
-      setWorkflows(wf.workflows || []);
-      setScenarios(sc.scenarios || []);
-    }).catch(err => console.error("Could not load data", err));
+    async function loadData() {
+      try {
+        const response = await fetch('/api/workflows');
+        const data = await response.json();
+        setWorkflows(data.workflows || []);
+      } catch (loadError) {
+        console.error('Could not load data', loadError);
+      }
+    }
+
+    loadData();
   }, []);
 
-  const columns = useMemo(() => [
-    { accessorKey: 'name', header: 'Workflow Name', size: 250 },
-    { accessorKey: 'category', header: 'Category', size: 150 },
-    { accessorKey: 'summary', header: 'Description', size: 350 },
-    {
-      id: 'actions',
-      header: 'Actions',
-      size: 150,
-      cell: ({ row }) => (
-        <button 
-          onClick={() => setActiveSimulation(row.original)}
-          style={{ padding: '6px 12px', background: 'var(--color-accent-primary)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '12px' }}
-        >
-          Simulate
-        </button>
-      )
-    }
-  ], []);
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Workflow Name',
+        size: 240,
+        cell: ({ row, getValue }) => (
+          <div className="workflow-name-cell">
+            <strong>{getValue()}</strong>
+            <span>{row.original.triggers?.[0]}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'category',
+        header: 'Category',
+        size: 150,
+        cell: ({ getValue }) => <span className="category-pill">{getValue()}</span>,
+      },
+      {
+        accessorKey: 'summary',
+        header: 'Description',
+        size: 420,
+        cell: ({ getValue }) => <p className="summary-cell">{getValue()}</p>,
+      },
+      {
+        id: 'actions',
+        header: 'Action',
+        size: 160,
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Button
+            variant="secondary"
+            size="s"
+            className="table-action-button"
+            onClick={() => {
+              setActiveSimulation(row.original);
+              setSimulationResult(null);
+              setError(null);
+            }}
+          >
+            <Zap size={14} />
+            Simulate
+          </Button>
+        ),
+      },
+    ],
+    []
+  );
 
-  const runSimulation = async (e) => {
-    e.preventDefault();
+  async function runSimulation(event) {
+    event.preventDefault();
     setIsSimulating(true);
     setSimulationResult(null);
+    setError(null);
 
-    const formData = new FormData(e.target);
+    const formData = new FormData(event.target);
     const payload = Object.fromEntries(formData.entries());
     payload.urgency = Number(payload.urgency);
     payload.workflowId = activeSimulation.id;
 
     try {
-      // Fake a delay for effect
-      await new Promise(r => setTimeout(r, 800));
-      const res = await fetch('/api/simulate', {
+      const response = await fetch('/api/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
-      const data = await res.json();
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Execution failed');
+      }
+
       setSimulationResult(data);
-    } catch (err) {
-      console.error(err);
+    } catch (requestError) {
+      setError(requestError.message);
     } finally {
       setIsSimulating(false);
     }
-  };
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xl)' }}>
-      {/* Page Header */}
-      <div>
-        <h1 style={{ fontSize: 'var(--font-size-xxl)', marginBottom: 'var(--spacing-xs)' }}>Workflow Intelligence</h1>
-        <p style={{ color: 'var(--color-text-muted)', maxWidth: '600px' }}>
-          Real-time metrics and dynamic orchestration catalog. Manage automated paths and trace payload simulations across the architecture.
-        </p>
-      </div>
+    <div className="dashboard-shell">
+      <section className="dashboard-hero">
+        <div className="dashboard-copy">
+          <div className="pill">
+            <Activity size={14} />
+            Real-time intelligence
+          </div>
+          <h1>Operational visibility for adaptive AI workflows.</h1>
+          <p>
+            Review deployed automations, inspect route decisions, and run end-to-end
+            simulations from the same environment that introduces the product.
+          </p>
+        </div>
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--spacing-l)' }}>
-        <MetricCard title="Active Templates" value={workflows.length} trend="up" trendValue="12% from last wk" />
-        <MetricCard title="Success Rate" value="99.2%" trend="up" trendValue="0.1%" />
-        <MetricCard title="API Requests / min" value="4,204" trend="down" trendValue="5%" />
-      </div>
+        <div className="dashboard-hero-panel">
+          <div className="dashboard-hero-label">Launch path</div>
+          <h3>Landing page to simulator in one flow</h3>
+          <p>
+            The dashboard now continues the same visual language as the homepage, so the
+            transition into execution feels seamless.
+          </p>
+        </div>
+      </section>
 
-      {/* Table Section */}
-      <div>
-        <h3 style={{ marginBottom: 'var(--spacing-m)' }}>Deployed Workflows</h3>
+      <section className="metric-grid">
+        <MetricCard
+          accentIndex={0}
+          title="Active Templates"
+          value={workflows.length || 3}
+          trend="up"
+          trendValue="12% this week"
+        />
+        <MetricCard
+          accentIndex={1}
+          title="Success Rate"
+          value="99.2%"
+          trend="up"
+          trendValue="Stable"
+        />
+        <MetricCard
+          accentIndex={2}
+          title="Avg Response"
+          value="1.8s"
+          trend="down"
+          trendValue="Faster"
+        />
+      </section>
+
+      <section className="dashboard-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Deployment registry</p>
+            <h2>Deployed workflows</h2>
+            <p className="section-description">
+              Simulate any workflow to trigger the AI execution pipeline and inspect its
+              generated route summary.
+            </p>
+          </div>
+          <div className="header-chip">{workflows.length} active</div>
+        </div>
+
         {workflows.length > 0 ? (
           <DataTable data={workflows} columns={columns} />
         ) : (
-          <div style={{ padding: '40px', textAlign: 'center', background: 'var(--color-ui-bg-panel)', borderRadius: 'var(--border-radius-l)', border: '1px solid var(--color-ui-border)' }}>
-            Loading workflows...
+          <div className="empty-state-card">
+            <Sparkles size={24} />
+            <p>Loading workflows...</p>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Simulation Focus View */}
       <AnimatePresence>
         {activeSimulation && (
-          <FocusView onClose={() => setActiveSimulation(null)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-l)', borderBottom: '1px solid var(--color-ui-border)', paddingBottom: 'var(--spacing-m)' }}>
-              <h2>Simulate Payload: {activeSimulation.name}</h2>
-              <button onClick={() => { setActiveSimulation(null); setSimulationResult(null); }} style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '24px' }}>&times;</button>
+          <FocusView
+            onClose={() => {
+              setActiveSimulation(null);
+              setSimulationResult(null);
+            }}
+          >
+            <div className="modal-header">
+              <div>
+                <div className="pill">
+                  <Sparkles size={14} />
+                  AI Pipeline Execution
+                </div>
+                <h2>{activeSimulation.name}</h2>
+                <p>{activeSimulation.summary}</p>
+              </div>
+
+              <button
+                className="icon-button"
+                type="button"
+                onClick={() => {
+                  setActiveSimulation(null);
+                  setSimulationResult(null);
+                }}
+              >
+                <X size={16} />
+              </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-xl)' }}>
-              {/* Form */}
-              <form onSubmit={runSimulation} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-m)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: 'var(--font-size-s)', fontWeight: 600 }}>Customer Name</label>
-                  <input name="customerName" required placeholder="Acme Corp" style={{ padding: '10px', borderRadius: '4px', border: '1px solid var(--color-ui-border)', background: 'var(--color-ui-bg-base)', color: 'var(--color-text-main)' }} />
-                </div>
-                
-                <div style={{ display: 'flex', gap: 'var(--spacing-m)' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                    <label style={{ fontSize: 'var(--font-size-s)', fontWeight: 600 }}>Trigger Source</label>
-                    <input name="source" required placeholder="Support Ticket" style={{ padding: '10px', borderRadius: '4px', border: '1px solid var(--color-ui-border)', background: 'var(--color-ui-bg-base)', color: 'var(--color-text-main)' }} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                    <label style={{ fontSize: 'var(--font-size-s)', fontWeight: 600 }}>Market Segment</label>
-                    <select name="customerSegment" style={{ padding: '10px', borderRadius: '4px', border: '1px solid var(--color-ui-border)', background: 'var(--color-ui-bg-base)', color: 'var(--color-text-main)' }}>
+            <div className="modal-grid">
+              <form className="simulation-form" onSubmit={runSimulation}>
+                <Field label="Customer Name">
+                  <input
+                    className={INPUT_CLASS}
+                    name="customerName"
+                    placeholder="Acme Corp"
+                    required
+                  />
+                </Field>
+
+                <Field label="Recipient Email" badge="Real email sent">
+                  <input
+                    className={INPUT_CLASS}
+                    name="email"
+                    type="email"
+                    placeholder="customer@example.com"
+                    required
+                  />
+                </Field>
+
+                <div className="form-split">
+                  <Field label="Trigger Source">
+                    <input
+                      className={INPUT_CLASS}
+                      name="source"
+                      placeholder="Support ticket"
+                      required
+                    />
+                  </Field>
+
+                  <Field label="Segment">
+                    <select className={INPUT_CLASS} name="customerSegment" defaultValue="Enterprise">
                       <option>Enterprise</option>
                       <option>SMB</option>
+                      <option>VIP</option>
+                      <option>Mid-market</option>
                     </select>
-                  </div>
+                  </Field>
                 </div>
 
-                <div style={{ display: 'flex', gap: 'var(--spacing-m)' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                    <label style={{ fontSize: 'var(--font-size-s)', fontWeight: 600 }}>Initial Sentiment</label>
-                    <select name="sentiment" style={{ padding: '10px', borderRadius: '4px', border: '1px solid var(--color-ui-border)', background: 'var(--color-ui-bg-base)', color: 'var(--color-text-main)' }}>
+                <div className="form-split">
+                  <Field label="Sentiment">
+                    <select className={INPUT_CLASS} name="sentiment" defaultValue="neutral">
                       <option>neutral</option>
                       <option>positive</option>
                       <option>negative</option>
                     </select>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                    <label style={{ fontSize: 'var(--font-size-s)', fontWeight: 600 }}>Urgency (1-100)</label>
-                    <input type="number" name="urgency" min="1" max="100" defaultValue="50" style={{ padding: '10px', borderRadius: '4px', border: '1px solid var(--color-ui-border)', background: 'var(--color-ui-bg-base)', color: 'var(--color-text-main)' }} />
-                  </div>
+                  </Field>
+
+                  <Field label="Urgency (1-100)">
+                    <input
+                      className={INPUT_CLASS}
+                      defaultValue="50"
+                      max="100"
+                      min="1"
+                      name="urgency"
+                      type="number"
+                    />
+                  </Field>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: 'var(--font-size-s)', fontWeight: 600 }}>Payload Message</label>
-                  <textarea name="message" required rows="3" placeholder="Enter payload..." style={{ padding: '10px', borderRadius: '4px', border: '1px solid var(--color-ui-border)', background: 'var(--color-ui-bg-base)', color: 'var(--color-text-main)', resize: 'vertical' }}></textarea>
-                </div>
-                
-                <button type="submit" disabled={isSimulating} style={{ padding: '12px', background: 'var(--color-accent-primary)', color: '#fff', border: 'none', borderRadius: 'var(--border-radius-m)', fontWeight: 600, cursor: isSimulating ? 'wait' : 'pointer', marginTop: 'var(--spacing-m)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  {isSimulating ? <Sparkles size={18} className="animate-spin" /> : <Play size={18} />}
-                  {isSimulating ? 'Processing AI Layer...' : 'Simulate'}
-                </button>
+                <Field label="Payload Message">
+                  <textarea
+                    className={INPUT_CLASS}
+                    name="message"
+                    placeholder="Describe the incoming event..."
+                    required
+                    rows={5}
+                  />
+                </Field>
+
+                <Button type="submit" disabled={isSimulating}>
+                  {isSimulating ? <Sparkles size={16} className="animate-spin" /> : <Play size={16} />}
+                  {isSimulating ? 'Running AI pipeline...' : 'Simulate Workflow'}
+                </Button>
               </form>
 
-              {/* Results Container */}
-              <div style={{ background: 'var(--color-ui-bg-base)', borderRadius: 'var(--border-radius-m)', border: '1px solid var(--color-ui-border)', padding: 'var(--spacing-l)', display: 'flex', flexDirection: 'column' }}>
-                <h4 style={{ margin: 0, marginBottom: 'var(--spacing-m)' }}>Execution Output</h4>
+              <div className="output-panel">
+                <div className="output-heading">
+                  <Server size={14} />
+                  Execution output
+                </div>
+
+                {error ? (
+                  <div className="error-alert">
+                    <AlertCircle size={16} />
+                    <span>{error}</span>
+                  </div>
+                ) : null}
+
                 {simulationResult ? (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-m)' }}>
-                    <div style={{ padding: 'var(--spacing-s)', background: 'var(--color-bg-panel)', borderLeft: '3px solid var(--color-accent-primary)', fontSize: 'var(--font-size-s)' }}>
-                      <strong>{simulationResult.analysis.route.label}</strong>
-                      <p style={{ marginTop: '4px', color: 'var(--color-text-muted)' }}>{simulationResult.analysis.aiSummary}</p>
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="result-stack"
+                  >
+                    <div className="route-banner">
+                      <div className="route-title">
+                        <Zap size={14} />
+                        {simulationResult.analysis.route.label}
+                      </div>
+                      <p>{simulationResult.analysis.aiSummary}</p>
+                      <div className="route-tags">
+                        <span>Intent: {simulationResult.analysis.intent}</span>
+                        <span>Urgency: {simulationResult.analysis.urgencyScore}/100</span>
+                        <span>
+                          Tone: {simulationResult.analysis.personalization.preferredTone}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <strong style={{ fontSize: 'var(--font-size-s)' }}>Orchestration Steps:</strong>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {simulationResult.orchestration.executions.map((ex, i) => (
-                          <li key={i} style={{ padding: '8px', border: '1px solid var(--color-ui-border)', borderRadius: '4px', fontSize: '13px' }}>
-                            <strong style={{ display: 'block', color: 'var(--color-text-main)' }}>{ex.system}</strong>
-                            <span style={{ color: 'var(--color-text-muted)' }}>{ex.detail}</span>
-                          </li>
+
+                    {simulationResult.timeline?.length > 0 && (
+                      <div className="result-section">
+                        <h3>Pipeline timeline</h3>
+                        <div className="timeline">
+                          {simulationResult.timeline.map((step) => (
+                            <div className="timeline-step" key={`${step.stage}-${step.detail}`}>
+                              <span className="timeline-dot" />
+                              <div>
+                                <strong>{step.stage}</strong>
+                                <p>{step.detail}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="result-section">
+                      <h3>Executed actions</h3>
+                      <div className="execution-list">
+                        {simulationResult.orchestration.executions.map((execution, index) => (
+                          <div className="execution-card" key={`${execution.system}-${index}`}>
+                            <div className="execution-card-top">
+                              <div className="execution-system">
+                                {getExecutionIcon(execution.type)}
+                                <strong>{execution.system}</strong>
+                              </div>
+                              <span className={`status-pill ${getStatusTone(execution.status)}`}>
+                                {execution.status}
+                              </span>
+                            </div>
+                            <p>{execution.detail}</p>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   </motion.div>
-                ) : (
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', textAlign: 'center', gap: 'var(--spacing-s)' }}>
-                    <Server size={32} opacity={0.5} />
-                    <span style={{ fontSize: 'var(--font-size-s)' }}>Awaiting simulation payload...</span>
+                ) : !error ? (
+                  <div className="empty-output">
+                    <Server size={28} />
+                    <div>
+                      <strong>Awaiting execution</strong>
+                      <p>Fill the form and click simulate to inspect the generated route.</p>
+                    </div>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           </FocusView>
@@ -189,6 +410,4 @@ const Dashboard = () => {
       </AnimatePresence>
     </div>
   );
-};
-
-export default Dashboard;
+}
