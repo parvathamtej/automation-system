@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hybrid AI Workflow Automation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- HERO SECTION -->
+    <header class="section hero">
+      <div class="page-shell">
+        <nav class="topbar reveal">
+          <div class="brand">
+            <div class="brand-mark">A</div>
+            <div>
+              <span class="eyebrow">Project Framework</span>
+              <h1>Hybrid Workflow Engine</h1>
+            </div>
+          </div>
+          <a class="ghost-link" href="#simulator">Launch simulator</a>
+        </nav>
+
+        <div class="hero-grid">
+          <section class="hero-copy reveal stagger-1">
+            <span class="pill">Reconfigurable Intelligent Automation</span>
+            <h2>Workflows built to adapt seamlessly.</h2>
+            <p>
+              This live visualization turns our workflow abstract into a working system: events enter through dynamic
+              sources, an AI reasoning layer chooses the optimal path, and an external orchestration
+              engine executes the pipeline.
+            </p>
+            <div class="hero-actions">
+              <a class="primary-button" href="#simulator">Run a workflow</a>
+              <a class="secondary-button" href="#architecture">How it works</a>
+            </div>
+          </section>
+
+          <aside class="hero-panel reveal stagger-2">
+            <span class="eyebrow">Live System Metrics</span>
+            <div class="metric-row">
+              <div class="metric-card">
+                <span>Active templates</span>
+                <strong id="workflow-count" class="counter" data-target="0">0</strong>
+              </div>
+              <div class="metric-card">
+                <span>Success rate</span>
+                <strong class="counter" data-target="99.2" data-suffix="%">0%</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- ARCHITECTURE SECTION -->
+      <section class="section alt-bg" id="architecture">
+        <div class="page-shell">
+          <div class="section-heading reveal">
+            <span class="eyebrow">Framework Architecture</span>
+            <h3>Dynamic intelligence layer coupled with external orchestrators.</h3>
+          </div>
+          <div class="timeline-container" id="architecture-timeline">
+            <div class="timeline-track">
+              <div class="timeline-fill" id="timeline-fill"></div>
+            </div>
+            <div class="timeline-steps" id="architecture-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CATALOG SECTION -->
+      <section class="section">
+        <div class="page-shell">
+          <div class="section-heading reveal">
+            <span class="eyebrow">Available Workflows</span>
+            <h3>Explore the templated action grids configured in the engine.</h3>
+          </div>
+          <div class="workflow-grid" id="workflow-grid"></div>
+        </div>
+      </section>
+
+      <!-- SIMULATOR SECTION -->
+      <section class="section alt-bg" id="simulator">
+        <div class="page-shell">
+          <div class="section-heading reveal">
+            <span class="eyebrow">End-to-End Visualizer</span>
+            <h3>Simulate a live data payload through the AI reasoning models.</h3>
+          </div>
+
+          <div class="simulator-layout">
+            <form class="form-card reveal stagger-1" id="simulation-form">
+              <div class="form-topline">
+                <h4>Event Input Form</h4>
+                <select id="scenario-picker" aria-label="Choose a sample scenario" style="width: auto;">
+                  <option value="">Start from a preset sample</option>
+                </select>
+              </div>
+
+              <label>
+                Assigned Workflow Template
+                <select name="workflowId" id="workflowId" required></select>
+              </label>
+
+              <div class="field-row">
+                <label>
+                  Customer Identifier
+                  <input name="customerName" id="customerName" type="text" placeholder="Northstar Health" required />
+                </label>
+
+                <label>
+                  Trigger Source
+                  <input name="source" id="source" type="text" placeholder="Website request" required />
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label>
+                  Market Segment
+                  <select name="customerSegment" id="customerSegment">
+                    <option>Enterprise</option>
+                    <option>Mid-market</option>
+                    <option>SMB</option>
+                    <option>VIP</option>
+                  </select>
+                </label>
+
+                <label>
+                  Ingestion Channel
+                  <select name="channel" id="channel">
+                    <option>email</option>
+                    <option>portal</option>
+                    <option>crm</option>
+                    <option>webhook</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label>
+                  Initial Sentiment
+                  <select name="sentiment" id="sentiment">
+                    <option>positive</option>
+                    <option>neutral</option>
+                    <option>negative</option>
+                  </select>
+                </label>
+
+                <label>
+                  Calculated Urgency
+                  <div style="display: flex; align-items: center; gap: 16px; margin-top: 8px;">
+                    <input name="urgency" id="urgency" type="range" min="1" max="100" value="75" style="padding: 0; outline: none; border: none; flex: 1;" />
+                    <span class="range-value" id="urgency-value" style="font-weight: 800; color: var(--accent);">75</span>
+                  </div>
+                </label>
+              </div>
+
+              <label>
+                Payload Description (Event Message)
+                <textarea
+                  name="message"
+                  id="message"
+                  rows="3"
+                  placeholder="Paste the incoming request or payload data block"
+                  required
+                ></textarea>
+              </label>
+
+              <button class="primary-button" type="submit" style="width: 100%;">Execute Framework Pipeline</button>
+            </form>
+
+            <div class="results-card reveal stagger-2">
+              <div class="form-topline" style="margin-bottom: 24px;">
+                <h4 style="margin: 0;">Execution Output</h4>
+                <span id="status-badge" class="status-badge idle">Waiting for trigger</span>
+              </div>
+
+              <div class="pipeline-visualizer" id="pipeline-visualizer">
+                <div class="pipeline-path">
+                  <div class="pipeline-path-fill" id="pipeline-path-fill-sim"></div>
+                </div>
+                <div class="pipeline-node" id="node-event">
+                  <div class="node-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                  </div>
+                  <span>Payload</span>
+                </div>
+                <div class="pipeline-node" id="node-ai">
+                  <div class="node-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                  </div>
+                  <span>AI Layer</span>
+                </div>
+                <div class="pipeline-node" id="node-engine">
+                  <div class="node-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
+                  </div>
+                  <span>Engine</span>
+                </div>
+              </div>
+
+              <div id="results-placeholder" class="results-placeholder">
+                Run a scenario to inspect the decision logic, automated action orchestration, and downstream executions.
+              </div>
+              <div id="results-container" class="results-container hidden"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

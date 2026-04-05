@@ -1,0 +1,17 @@
+{
+  "name": "ai-driven-workflow-automation",
+  "version": "1.0.0",
+  "description": "Hybrid AI-driven reconfigurable workflow automation demo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "ai",
+    "workflow",
+    "automation",
+    "orchestration",
+    "hybrid-architecture"
+  ],
+  "license": "MIT"
+}
