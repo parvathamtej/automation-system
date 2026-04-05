@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+:root {
+  /* 
+   * 1. LCH Color System
+   * Base color, accent color, and contrast
+   */
+  --color-base-hue: 220;     /* Blue tone base for the UI */
+  --color-accent-hue: 250;   /* Indigo/Violet accent */
+
+  /* Light mode for SaaS */
+  --color-bg-l: 100%;
+  --color-bg-c: 0.01;
+  --color-bg-h: var(--color-base-hue);
+
+  --color-ui-bg-base: lch(var(--color-bg-l) var(--color-bg-c) var(--color-bg-h));
+  --color-ui-bg-panel: lch(calc(var(--color-bg-l) - 4%) var(--color-bg-c) var(--color-bg-h));
+  --color-ui-bg-sidebar: var(--color-ui-bg-base); /* Non-contrasting sidebar per spec */
+  
+  --color-ui-border: lch(calc(var(--color-bg-l) - 12%) calc(var(--color-bg-c) + 0.01) var(--color-bg-h));
+  --color-ui-border-strong: lch(calc(var(--color-bg-l) - 20%) calc(var(--color-bg-c) + 0.01) var(--color-bg-h));
+  
+  --color-text-main: lch(15% 0.01 var(--color-base-hue));
+  --color-text-muted: lch(45% 0.02 var(--color-base-hue));
+
+  /* Accents */
+  --color-accent-primary: lch(60% 0.15 var(--color-accent-hue));
+  --color-accent-hover: lch(65% 0.16 var(--color-accent-hue));
+  --color-accent-soft: lch(25% 0.05 var(--color-accent-hue));
+
+  /* Status Colors */
+  --color-status-success: lch(60% 0.12 140);
+  --color-status-danger: lch(55% 0.15 25);
+  --color-status-warning: lch(70% 0.13 65);
+
+  /* 
+   * 2. Spacing Scale (8px base grid)
+   * Multiplier tokens: 0.5x to 5x
+   */
+  --spacing-xxs: 4px;   /* 0.5x */
+  --spacing-xs: 8px;    /* 1.0x */
+  --spacing-s: 12px;    /* 1.5x */
+  --spacing-m: 16px;    /* 2.0x */
+  --spacing-l: 24px;    /* 3.0x */
+  --spacing-xl: 32px;   /* 4.0x */
+  --spacing-xxl: 40px;  /* 5.0x */
+
+  /* 
+   * 3. Typography Scale
+   */
+  --font-family-heading: 'Geist', 'Inter', sans-serif;
+  --font-family-body: 'Inter', sans-serif;
+  --font-family-data: 'Geist Mono', 'Inter', monospace;
+
+  --font-size-xs: 0.75rem;
+  --font-size-s: 0.875rem;
+  --font-size-m: 1rem;
+  --font-size-l: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-xxl: 2rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /*
+   * 4. Radii & Borders
+   */
+  --border-radius-s: 6px;
+  --border-radius-m: 8px;
+  --border-radius-l: 12px;
+
+  /*
+   * 5. Ambient Shadows (3-5 stacked box-shadows, matching background hue)
+   */
+  --shadow-color-l: calc(var(--color-bg-l) - 5%);
+  --shadow-color: set-color(lch(var(--shadow-color-l) var(--color-bg-c) var(--color-bg-h))); /* Custom logic visually represented via hsl interpolation in browsers */
+  --shadow-color-raw: 220 20% 5%; /* Using HSL fallback for ease of browser shadow rendering if LCH lacks support in shadows sometimes */
+  
+  --shadow-elevation-sm: 
+    0 1px 2px hsl(var(--shadow-color-raw) / 0.1),
+    0 2px 4px hsl(var(--shadow-color-raw) / 0.1);
+    
+  --shadow-elevation-md: 
+    0 2px 4px hsl(var(--shadow-color-raw) / 0.15),
+    0 4px 8px hsl(var(--shadow-color-raw) / 0.15),
+    0 8px 16px hsl(var(--shadow-color-raw) / 0.15);
+    
+  --shadow-elevation-lg: 
+    0 4px 8px hsl(var(--shadow-color-raw) / 0.2),
+    0 8px 16px hsl(var(--shadow-color-raw) / 0.2),
+    0 16px 32px hsl(var(--shadow-color-raw) / 0.2),
+    0 24px 48px hsl(var(--shadow-color-raw) / 0.2);
+}
+
+/* Base Rest */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family-body);
+  background-color: var(--color-ui-bg-base);
+  color: var(--color-text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.02em;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* App Layout Structure */
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+}
