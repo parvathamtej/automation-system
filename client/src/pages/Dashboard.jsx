@@ -1,21 +1,24 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Activity,
-  AlertCircle,
-  Database,
-  Mail,
+  Clock3,
   Play,
+  RefreshCcw,
   Server,
   Sparkles,
+  TerminalSquare,
   X,
   Zap,
 } from 'lucide-react';
 import { Button, MetricCard } from '../components/ui/Cards';
 import { DataTable } from '../components/ui/Table';
 import { FocusView } from '../components/layout/Views';
+import PipelineVisualizer from '../components/simulator/PipelineVisualizer';
+import AIReasoningCard from '../components/simulator/AIReasoningCard';
+import EmailResultCard from '../components/simulator/EmailResultCard';
 
-const INPUT_CLASS = 'dashboard-input';
+const stepRevealDelay = 420;
 
 function Field({ label, badge, children }) {
   return (
@@ -29,16 +32,59 @@ function Field({ label, badge, children }) {
   );
 }
 
-function getStatusTone(status = '') {
-  if (status.includes('FAILED')) return 'is-danger';
-  if (status.includes('SIMULATED') || status.includes('SKIPPED')) return 'is-warning';
-  return 'is-success';
+function MetricStrip({ result }) {
+  if (!result) return null;
+
+  return (
+    <div className="runtime-metrics">
+      <div>
+        <span>Total execution</span>
+        <strong>{result.metrics.totalExecutionMs}ms</strong>
+      </div>
+      <div>
+        <span>AI processing</span>
+        <strong>{result.metrics.aiProcessingMs}ms</strong>
+      </div>
+      <div>
+        <span>Execution latency</span>
+        <strong>{result.metrics.executionMs}ms</strong>
+      </div>
+    </div>
+  );
 }
 
-function getExecutionIcon(type = '') {
-  if (type === 'EMAIL') return <Mail size={14} />;
-  if (type === 'CRM') return <Database size={14} />;
-  return <Zap size={14} />;
+function TechnicalLogs({ result, payloadDraft }) {
+  if (!result) {
+    return (
+      <div className="logs-grid">
+        <div className="log-card">
+          <h3>Request payload</h3>
+          <pre>{JSON.stringify(payloadDraft, null, 2)}</pre>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="logs-grid">
+      <div className="log-card">
+        <h3>API request payload</h3>
+        <pre>{JSON.stringify(result.technicalLogs.requestPayload, null, 2)}</pre>
+      </div>
+      <div className="log-card">
+        <h3>AI analysis JSON</h3>
+        <pre>{JSON.stringify(result.technicalLogs.analysis, null, 2)}</pre>
+      </div>
+      <div className="log-card">
+        <h3>Execution logs</h3>
+        <pre>{JSON.stringify(result.technicalLogs.executionLogs, null, 2)}</pre>
+      </div>
+      <div className="log-card">
+        <h3>Email / action response</h3>
+        <pre>{JSON.stringify(result.technicalLogs.executions, null, 2)}</pre>
+      </div>
+    </div>
+  );
 }
 
 export default function Dashboard() {
@@ -47,6 +93,18 @@ export default function Dashboard() {
   const [simulationResult, setSimulationResult] = useState(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('visual');
+  const [revealedSteps, setRevealedSteps] = useState(0);
+  const replayTimer = useRef(null);
+  const [payloadDraft, setPayloadDraft] = useState({
+    customerName: 'Aster Retail',
+    email: '',
+    source: 'Support portal',
+    customerSegment: 'Enterprise',
+    sentiment: 'neutral',
+    urgency: 50,
+    message: 'Describe the incoming event and what the customer needs.',
+  });
 
   useEffect(() => {
     async function loadData() {
@@ -55,56 +113,72 @@ export default function Dashboard() {
         const data = await response.json();
         setWorkflows(data.workflows || []);
       } catch (loadError) {
-        console.error('Could not load data', loadError);
+        console.error('Could not load workflows', loadError);
       }
     }
 
     loadData();
+    return () => window.clearTimeout(replayTimer.current);
   }, []);
+
+  function runRevealAnimation(stepCount) {
+    window.clearTimeout(replayTimer.current);
+    setRevealedSteps(0);
+
+    function tick(index) {
+      if (index > stepCount) return;
+      replayTimer.current = window.setTimeout(() => {
+        setRevealedSteps(index);
+        tick(index + 1);
+      }, stepRevealDelay);
+    }
+
+    tick(1);
+  }
 
   const columns = useMemo(
     () => [
       {
         accessorKey: 'name',
-        header: 'Workflow Name',
-        size: 240,
+        header: 'Workflow',
         cell: ({ row, getValue }) => (
-          <div className="workflow-name-cell">
+          <div className="workflow-cell">
             <strong>{getValue()}</strong>
-            <span>{row.original.triggers?.[0]}</span>
+            <span>{row.original.summary}</span>
           </div>
         ),
       },
       {
         accessorKey: 'category',
         header: 'Category',
-        size: 150,
-        cell: ({ getValue }) => <span className="category-pill">{getValue()}</span>,
+        cell: ({ getValue }) => <span className="table-chip">{getValue()}</span>,
       },
       {
-        accessorKey: 'summary',
-        header: 'Description',
-        size: 420,
-        cell: ({ getValue }) => <p className="summary-cell">{getValue()}</p>,
+        accessorKey: 'triggers',
+        header: 'Primary Trigger',
+        cell: ({ getValue }) => <span className="table-secondary-text">{getValue()?.[0]}</span>,
       },
       {
-        id: 'actions',
-        header: 'Action',
-        size: 160,
+        id: 'action',
+        header: 'Run',
         enableSorting: false,
         cell: ({ row }) => (
           <Button
-            variant="secondary"
+            variant="primary"
             size="s"
-            className="table-action-button"
             onClick={() => {
               setActiveSimulation(row.original);
               setSimulationResult(null);
               setError(null);
+              setActiveTab('visual');
+              setPayloadDraft((current) => ({
+                ...current,
+                customerName: current.customerName || row.original.name,
+              }));
             }}
           >
-            <Zap size={14} />
-            Simulate
+            <Play size={14} />
+            Run workflow
           </Button>
         ),
       },
@@ -117,11 +191,14 @@ export default function Dashboard() {
     setIsSimulating(true);
     setSimulationResult(null);
     setError(null);
+    setRevealedSteps(0);
+    setActiveTab('visual');
 
     const formData = new FormData(event.target);
     const payload = Object.fromEntries(formData.entries());
     payload.urgency = Number(payload.urgency);
     payload.workflowId = activeSimulation.id;
+    setPayloadDraft(payload);
 
     try {
       const response = await fetch('/api/simulate', {
@@ -136,6 +213,7 @@ export default function Dashboard() {
       }
 
       setSimulationResult(data);
+      runRevealAnimation(data.timeline.length);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -143,74 +221,62 @@ export default function Dashboard() {
     }
   }
 
+  const emailExecution = simulationResult?.orchestration.executions.find((item) => item.type === 'EMAIL');
+
   return (
-    <div className="dashboard-shell">
+    <div className="dashboard-page">
       <section className="dashboard-hero">
-        <div className="dashboard-copy">
-          <div className="pill">
+        <div className="hero-main-copy">
+          <div className="hero-badge dark-badge">
             <Activity size={14} />
-            Real-time intelligence
+            Real backend orchestration
           </div>
-          <h1>Operational visibility for adaptive AI workflows.</h1>
+          <h2>Demonstrate how AI reasoning turns business events into backend execution.</h2>
           <p>
-            Review deployed automations, inspect route decisions, and run end-to-end
-            simulations from the same environment that introduces the product.
+            This dashboard is for showcasing an AI workflow automation system. Each run
+            analyzes an incoming event, picks a decision route, executes backend actions, and
+            exposes the evidence in a visual runtime view and technical logs.
           </p>
         </div>
 
-        <div className="dashboard-hero-panel">
-          <div className="dashboard-hero-label">Launch path</div>
-          <h3>Landing page to simulator in one flow</h3>
-          <p>
-            The dashboard now continues the same visual language as the homepage, so the
-            transition into execution feels seamless.
-          </p>
-        </div>
-      </section>
-
-      <section className="metric-grid">
-        <MetricCard
-          accentIndex={0}
-          title="Active Templates"
-          value={workflows.length || 3}
-          trend="up"
-          trendValue="12% this week"
-        />
-        <MetricCard
-          accentIndex={1}
-          title="Success Rate"
-          value="99.2%"
-          trend="up"
-          trendValue="Stable"
-        />
-        <MetricCard
-          accentIndex={2}
-          title="Avg Response"
-          value="1.8s"
-          trend="down"
-          trendValue="Faster"
-        />
-      </section>
-
-      <section className="dashboard-section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Deployment registry</p>
-            <h2>Deployed workflows</h2>
-            <p className="section-description">
-              Simulate any workflow to trigger the AI execution pipeline and inspect its
-              generated route summary.
+        <div className="dashboard-hero-side">
+          <div className="glass-panel">
+            <p className="eyebrow">System behavior</p>
+            <h3>Trigger to AI to decision to execution to output</h3>
+            <p>
+              Operators can inspect the pipeline from high-level business flow all the way down
+              to SMTP provider responses and action logs.
             </p>
           </div>
-          <div className="header-chip">{workflows.length} active</div>
+        </div>
+      </section>
+
+      <section className="metrics-grid">
+        <MetricCard accentIndex={0} title="Active Templates" value={workflows.length || 3} trend="up" trendValue="Live catalog" />
+        <MetricCard accentIndex={1} title="Backend Visibility" value="100%" trend="up" trendValue="Proof surfaced" />
+        <MetricCard accentIndex={2} title="Interaction Model" value="AI + Ops" trend="up" trendValue="Realtime view" />
+      </section>
+
+      <section className="registry-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Workflow registry</p>
+            <h3>Deployed workflows</h3>
+            <p>
+              Select a workflow to open the simulator and watch the full execution path unfold
+              with backend evidence.
+            </p>
+          </div>
+          <div className="table-chip">{workflows.length} active</div>
         </div>
 
         {workflows.length > 0 ? (
           <DataTable data={workflows} columns={columns} />
         ) : (
-          <div className="empty-state-card">
-            <Sparkles size={24} />
-            <p>Loading workflows...</p>
+          <div className="skeleton-grid">
+            <div className="skeleton-card" />
+            <div className="skeleton-card" />
+            <div className="skeleton-card" />
           </div>
         )}
       </section>
@@ -221,13 +287,15 @@ export default function Dashboard() {
             onClose={() => {
               setActiveSimulation(null);
               setSimulationResult(null);
+              setError(null);
+              setRevealedSteps(0);
             }}
           >
-            <div className="modal-header">
+            <div className="simulator-header">
               <div>
-                <div className="pill">
-                  <Sparkles size={14} />
-                  AI Pipeline Execution
+                <div className="hero-badge dark-badge">
+                  <Zap size={14} />
+                  Workflow simulator
                 </div>
                 <h2>{activeSimulation.name}</h2>
                 <p>{activeSimulation.summary}</p>
@@ -239,45 +307,34 @@ export default function Dashboard() {
                 onClick={() => {
                   setActiveSimulation(null);
                   setSimulationResult(null);
+                  setError(null);
                 }}
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div className="modal-grid">
-              <form className="simulation-form" onSubmit={runSimulation}>
+            <div className="simulator-layout">
+              <form className="simulator-form glass-panel" onSubmit={runSimulation}>
+                <div className="form-intro">
+                  <h3>Input event</h3>
+                  <p>Describe the trigger so the backend can analyze and execute the workflow.</p>
+                </div>
+
                 <Field label="Customer Name">
-                  <input
-                    className={INPUT_CLASS}
-                    name="customerName"
-                    placeholder="Acme Corp"
-                    required
-                  />
+                  <input className="input-dark" name="customerName" defaultValue={payloadDraft.customerName} required />
                 </Field>
 
-                <Field label="Recipient Email" badge="Real email sent">
-                  <input
-                    className={INPUT_CLASS}
-                    name="email"
-                    type="email"
-                    placeholder="customer@example.com"
-                    required
-                  />
+                <Field label="Recipient Email" badge="Real SMTP if configured">
+                  <input className="input-dark" name="email" type="email" defaultValue={payloadDraft.email} placeholder="user@example.com" />
                 </Field>
 
-                <div className="form-split">
+                <div className="form-grid">
                   <Field label="Trigger Source">
-                    <input
-                      className={INPUT_CLASS}
-                      name="source"
-                      placeholder="Support ticket"
-                      required
-                    />
+                    <input className="input-dark" name="source" defaultValue={payloadDraft.source} required />
                   </Field>
-
                   <Field label="Segment">
-                    <select className={INPUT_CLASS} name="customerSegment" defaultValue="Enterprise">
+                    <select className="input-dark" name="customerSegment" defaultValue={payloadDraft.customerSegment}>
                       <option>Enterprise</option>
                       <option>SMB</option>
                       <option>VIP</option>
@@ -286,123 +343,116 @@ export default function Dashboard() {
                   </Field>
                 </div>
 
-                <div className="form-split">
+                <div className="form-grid">
                   <Field label="Sentiment">
-                    <select className={INPUT_CLASS} name="sentiment" defaultValue="neutral">
+                    <select className="input-dark" name="sentiment" defaultValue={payloadDraft.sentiment}>
                       <option>neutral</option>
                       <option>positive</option>
                       <option>negative</option>
                     </select>
                   </Field>
-
                   <Field label="Urgency (1-100)">
-                    <input
-                      className={INPUT_CLASS}
-                      defaultValue="50"
-                      max="100"
-                      min="1"
-                      name="urgency"
-                      type="number"
-                    />
+                    <input className="input-dark" name="urgency" type="number" min="1" max="100" defaultValue={payloadDraft.urgency} />
                   </Field>
                 </div>
 
                 <Field label="Payload Message">
-                  <textarea
-                    className={INPUT_CLASS}
-                    name="message"
-                    placeholder="Describe the incoming event..."
-                    required
-                    rows={5}
-                  />
+                  <textarea className="input-dark" name="message" rows={6} defaultValue={payloadDraft.message} required />
                 </Field>
 
-                <Button type="submit" disabled={isSimulating}>
-                  {isSimulating ? <Sparkles size={16} className="animate-spin" /> : <Play size={16} />}
-                  {isSimulating ? 'Running AI pipeline...' : 'Simulate Workflow'}
-                </Button>
+                <div className="form-actions">
+                  <Button type="submit" variant="primary" disabled={isSimulating}>
+                    {isSimulating ? <Sparkles size={16} className="animate-spin" /> : <Play size={16} />}
+                    {isSimulating ? 'Executing backend workflow...' : 'Run Workflow'}
+                  </Button>
+                </div>
               </form>
 
-              <div className="output-panel">
-                <div className="output-heading">
-                  <Server size={14} />
-                  Execution output
+              <div className="simulator-runtime">
+                <div className="runtime-toolbar glass-panel">
+                  <div>
+                    <p className="eyebrow">Execution experience</p>
+                    <h3>Live pipeline visualizer</h3>
+                  </div>
+                  <div className="tab-switch">
+                    <button className={activeTab === 'visual' ? 'is-active' : ''} type="button" onClick={() => setActiveTab('visual')}>
+                      Visual View
+                    </button>
+                    <button className={activeTab === 'logs' ? 'is-active' : ''} type="button" onClick={() => setActiveTab('logs')}>
+                      <TerminalSquare size={14} />
+                      Technical Logs
+                    </button>
+                  </div>
                 </div>
 
                 {error ? (
-                  <div className="error-alert">
-                    <AlertCircle size={16} />
-                    <span>{error}</span>
+                  <div className="error-panel">
+                    <h3>Execution failed</h3>
+                    <p>{error}</p>
                   </div>
                 ) : null}
 
-                {simulationResult ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="result-stack"
-                  >
-                    <div className="route-banner">
-                      <div className="route-title">
-                        <Zap size={14} />
-                        {simulationResult.analysis.route.label}
-                      </div>
-                      <p>{simulationResult.analysis.aiSummary}</p>
-                      <div className="route-tags">
-                        <span>Intent: {simulationResult.analysis.intent}</span>
-                        <span>Urgency: {simulationResult.analysis.urgencyScore}/100</span>
-                        <span>
-                          Tone: {simulationResult.analysis.personalization.preferredTone}
-                        </span>
-                      </div>
-                    </div>
+                {activeTab === 'visual' ? (
+                  <>
+                    <MetricStrip result={simulationResult} />
 
-                    {simulationResult.timeline?.length > 0 && (
-                      <div className="result-section">
-                        <h3>Pipeline timeline</h3>
-                        <div className="timeline">
-                          {simulationResult.timeline.map((step) => (
-                            <div className="timeline-step" key={`${step.stage}-${step.detail}`}>
-                              <span className="timeline-dot" />
-                              <div>
-                                <strong>{step.stage}</strong>
-                                <p>{step.detail}</p>
-                              </div>
-                            </div>
-                          ))}
+                    {simulationResult ? (
+                      <div className="visual-stack">
+                        <PipelineVisualizer steps={simulationResult.timeline} revealCount={revealedSteps} />
+                        <AIReasoningCard analysis={simulationResult.analysis} isVisible={revealedSteps >= 2} />
+                        <EmailResultCard execution={emailExecution} />
+
+                        <div className="glass-panel replay-card">
+                          <div>
+                            <p className="eyebrow">Replay</p>
+                            <h3>Replay execution timeline</h3>
+                            <p>
+                              Re-run the interface animation against the last backend result without
+                              making another API call.
+                            </p>
+                          </div>
+                          <Button
+                            variant="secondary"
+                            type="button"
+                            disabled={!simulationResult}
+                            onClick={() => {
+                              if (simulationResult) {
+                                runRevealAnimation(simulationResult.timeline.length);
+                              }
+                            }}
+                          >
+                            <RefreshCcw size={14} />
+                            Replay Workflow
+                          </Button>
                         </div>
                       </div>
-                    )}
-
-                    <div className="result-section">
-                      <h3>Executed actions</h3>
-                      <div className="execution-list">
-                        {simulationResult.orchestration.executions.map((execution, index) => (
-                          <div className="execution-card" key={`${execution.system}-${index}`}>
-                            <div className="execution-card-top">
-                              <div className="execution-system">
-                                {getExecutionIcon(execution.type)}
-                                <strong>{execution.system}</strong>
-                              </div>
-                              <span className={`status-pill ${getStatusTone(execution.status)}`}>
-                                {execution.status}
-                              </span>
-                            </div>
-                            <p>{execution.detail}</p>
-                          </div>
-                        ))}
+                    ) : (
+                      <div className="glass-panel empty-runtime">
+                        <Server size={28} />
+                        <h3>Ready to demonstrate the system</h3>
+                        <p>
+                          Submit a workflow event to show how the backend analyzes the payload,
+                          selects a route, and executes downstream actions.
+                        </p>
                       </div>
+                    )}
+                  </>
+                ) : (
+                  <TechnicalLogs result={simulationResult} payloadDraft={payloadDraft} />
+                )}
+
+                {simulationResult && (
+                  <div className="glass-panel technical-summary">
+                    <div className="summary-item">
+                      <Clock3 size={16} />
+                      <span>Run completed in {simulationResult.metrics.totalExecutionMs}ms</span>
                     </div>
-                  </motion.div>
-                ) : !error ? (
-                  <div className="empty-output">
-                    <Server size={28} />
-                    <div>
-                      <strong>Awaiting execution</strong>
-                      <p>Fill the form and click simulate to inspect the generated route.</p>
+                    <div className="summary-item">
+                      <Sparkles size={16} />
+                      <span>{simulationResult.analysis.route.label}</span>
                     </div>
                   </div>
-                ) : null}
+                )}
               </div>
             </div>
           </FocusView>

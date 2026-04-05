@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import { ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
 
 export function DataTable({ data, columns }) {
@@ -20,9 +15,9 @@ export function DataTable({ data, columns }) {
   });
 
   return (
-    <div className="table-shell">
-      <div className="table-scroll">
-        <table className="data-table">
+    <div className="table-card">
+      <div className="table-wrap">
+        <table className="workflow-table">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -30,15 +25,11 @@ export function DataTable({ data, columns }) {
                   const sorted = header.column.getIsSorted();
 
                   return (
-                    <th
-                      key={header.id}
-                      style={{ width: header.getSize() }}
-                      onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
-                    >
-                      <div className={`table-head-cell ${header.column.getCanSort() ? 'is-sortable' : ''}`}>
+                    <th key={header.id} onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}>
+                      <div className={`table-header-cell ${header.column.getCanSort() ? 'is-sortable' : ''}`}>
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getCanSort() && (
-                          <span className="sort-icon">
+                          <span>
                             {sorted === 'asc' ? (
                               <ChevronUp size={12} />
                             ) : sorted === 'desc' ? (
@@ -66,11 +57,6 @@ export function DataTable({ data, columns }) {
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="table-footer">
-        <span>{data.length} workflows</span>
-        <span className="table-live-pill">Live</span>
       </div>
     </div>
   );

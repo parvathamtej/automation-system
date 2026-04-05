@@ -1,110 +1,132 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, Sparkles } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Play, ServerCog, Workflow } from 'lucide-react';
 
-const fadeIn = {
-  initial: { opacity: 0, y: 24 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
-};
-
-const stats = [
-  { label: 'Active templates', value: '3' },
-  { label: 'Success rate', value: '99.2%' },
+const features = [
+  {
+    icon: Workflow,
+    title: 'Event-driven automation',
+    description:
+      'Business events trigger a real backend workflow that evaluates intent, urgency, and routing rules before any downstream action executes.',
+  },
+  {
+    icon: BrainCircuit,
+    title: 'AI reasoning layer',
+    description:
+      'The platform explains how intent was classified, why a route was chosen, and which tone the system selected for outreach.',
+  },
+  {
+    icon: ServerCog,
+    title: 'Backend execution proof',
+    description:
+      'Runs expose timestamps, latency, SMTP responses, and technical logs so viewers can see actual execution rather than mocked frontend state.',
+  },
 ];
 
 export default function LandingPage({ onLaunch }) {
   return (
-    <div className="landing-shell">
-      <div className="landing-grid" />
-      <div className="landing-glow landing-glow-left" />
-      <div className="landing-glow landing-glow-right" />
-
-      <motion.header className="landing-topbar" {...fadeIn}>
-        <div className="brand-lockup">
-          <div className="brand-mark">A</div>
-          <div>
-            <p className="eyebrow">Project Framework</p>
-            <h1 className="brand-title">Hybrid Workflow Engine</h1>
-          </div>
-        </div>
-
-        <button className="button button-secondary landing-launch" onClick={onLaunch}>
-          Launch simulator
-        </button>
-      </motion.header>
-
-      <main className="landing-main">
-        <motion.section className="landing-copy" {...fadeIn}>
-          <div className="pill">
-            <Sparkles size={14} />
-            Reconfigurable Intelligent Automation
-          </div>
-
-          <h2 className="landing-headline">Workflows built to adapt seamlessly.</h2>
-          <p className="landing-description">
-            This live visualization turns your workflow abstract into a working system:
-            events enter through dynamic sources, an AI reasoning layer chooses the
-            optimal path, and an orchestration engine executes the pipeline.
-          </p>
-
-          <div className="landing-actions">
-            <button className="button button-primary" onClick={onLaunch}>
-              <Play size={16} />
-              Simulate workflow
-            </button>
-            <a className="button button-secondary" href="#how-it-works">
-              How it works
-              <ArrowRight size={16} />
-            </a>
-          </div>
-        </motion.section>
-
-        <motion.aside
-          className="hero-metrics-card"
-          initial={{ opacity: 0, x: 28 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.55, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+    <div className="landing-page">
+      <div className="landing-content">
+        <motion.header
+          className="landing-header"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
         >
-          <div className="hero-metrics-label">Live system metrics</div>
-          <div className="hero-metrics-grid">
-            {stats.map((stat) => (
-              <div key={stat.label} className="hero-metric">
-                <span>{stat.label}</span>
-                <strong>{stat.value}</strong>
-              </div>
-            ))}
+          <div className="landing-brand">
+            <div className="brand-mark">A</div>
+            <div>
+              <p className="eyebrow">AI Workflow Automation</p>
+              <h1>Hybrid Workflow Engine</h1>
+            </div>
           </div>
-        </motion.aside>
-      </main>
 
-      <section className="landing-details" id="how-it-works">
-        <motion.div className="feature-card" {...fadeIn}>
-          <p className="feature-kicker">Signal intake</p>
-          <h3>Events enter from forms, CRM updates, tickets, and campaign triggers.</h3>
-          <p>
-            Each workflow template carries its own triggers, routing rules, and orchestration
-            actions so the simulator behaves like a product, not a placeholder page.
-          </p>
-        </motion.div>
+          <button className="button button-secondary" onClick={onLaunch}>
+            Launch simulator
+          </button>
+        </motion.header>
 
-        <motion.div className="feature-card" {...fadeIn}>
-          <p className="feature-kicker">AI decisioning</p>
-          <h3>The reasoning layer chooses tone, urgency, and the correct execution path.</h3>
-          <p>
-            Scores and route summaries are surfaced in the dashboard so you can inspect how
-            the engine responds before it pushes work downstream.
-          </p>
-        </motion.div>
+        <section className="hero-section">
+          <motion.div
+            className="hero-copy"
+            initial={{ opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+          >
+            <div className="hero-badge">Production-style orchestration demo</div>
+            <h2>See how AI classifies events and triggers real backend workflow actions.</h2>
+            <p>
+              This product demonstrates an automation platform where incoming events are
+              analyzed by an AI layer, routed through orchestration logic, and executed by a
+              backend service with visible proof of what actually ran.
+            </p>
 
-        <motion.div className="feature-card" {...fadeIn}>
-          <p className="feature-kicker">Orchestration</p>
-          <h3>Simulation opens the current dashboard and lets you execute the real flow.</h3>
-          <p>
-            One click takes you into the operational workspace where the same theme, spacing,
-            and interaction patterns now continue consistently.
-          </p>
-        </motion.div>
-      </section>
+            <div className="hero-actions">
+              <button className="button button-primary" onClick={onLaunch}>
+                <Play size={16} />
+                Simulate workflow
+              </button>
+              <a className="button button-tertiary" href="#what-it-does">
+                Explore system
+                <ArrowRight size={16} />
+              </a>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="hero-preview"
+            initial={{ opacity: 0, scale: 0.98, y: 24 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.1 }}
+          >
+            <div className="hero-preview-top">
+              <span className="terminal-dot red" />
+              <span className="terminal-dot amber" />
+              <span className="terminal-dot green" />
+              <p>workflow-runtime.tsx</p>
+            </div>
+
+            <div className="preview-grid">
+              <div className="preview-card">
+                <span>Trigger</span>
+                <strong>Support portal event</strong>
+              </div>
+              <div className="preview-card">
+                <span>AI Decision</span>
+                <strong>Priority incident response</strong>
+              </div>
+              <div className="preview-card">
+                <span>Execution proof</span>
+                <strong>SMTP 250 OK received</strong>
+              </div>
+              <div className="preview-card">
+                <span>Latency</span>
+                <strong>1.2s total runtime</strong>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        <section className="feature-grid" id="what-it-does">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <motion.article
+                className="feature-panel"
+                key={feature.title}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.12 + index * 0.05 }}
+              >
+                <div className="feature-icon">
+                  <Icon size={18} />
+                </div>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </motion.article>
+            );
+          })}
+        </section>
+      </div>
     </div>
   );
 }

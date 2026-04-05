@@ -2,119 +2,118 @@ import { useState } from 'react';
 import {
   Bell,
   ChevronLeft,
-  FolderGit2,
   Home,
   LayoutDashboard,
   Menu,
-  Settings,
+  Moon,
+  PlayCircle,
+  Settings2,
   Sparkles,
+  SunMedium,
 } from 'lucide-react';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, active: true },
-  { label: 'Workflows', icon: FolderGit2 },
-  { label: 'Settings', icon: Settings },
+  { label: 'Simulator', icon: PlayCircle, active: false },
+  { label: 'Settings', icon: Settings2, active: false },
 ];
 
-function NavButton({ icon: Icon, label, active }) {
+function SidebarItem({ icon: Icon, label, active, open }) {
   return (
-    <button className={`sidebar-link ${active ? 'is-active' : ''}`} type="button">
+    <button className={`sidebar-item ${active ? 'is-active' : ''}`} type="button">
       <Icon size={17} />
-      <span>{label}</span>
+      {open && <span>{label}</span>}
     </button>
   );
 }
 
-function Sidebar({ open, onToggle, onBackHome }) {
-  return (
-    <aside className={`app-sidebar ${open ? 'is-open' : 'is-collapsed'}`}>
-      <div className="app-sidebar-inner">
-        <div className="sidebar-brand">
-          <div className="brand-lockup">
-            <div className="brand-mark">A</div>
-            {open && (
-              <div>
-                <p className="eyebrow">Workflow Ops</p>
-                <h2 className="brand-title">Hybrid Engine</h2>
-              </div>
-            )}
-          </div>
-
-          <button className="icon-button subtle" type="button" onClick={onToggle}>
-            <ChevronLeft size={16} />
-          </button>
-        </div>
-
-        <button className="sidebar-home" type="button" onClick={onBackHome}>
-          <Home size={16} />
-          {open && <span>Back to landing page</span>}
-        </button>
-
-        <nav className="sidebar-nav">
-          {navItems.map((item) => (
-            <NavButton key={item.label} {...item} />
-          ))}
-        </nav>
-
-        <div className="sidebar-card">
-          {open && (
-            <>
-              <div className="sidebar-card-header">
-                <Sparkles size={14} />
-                Live routing
-              </div>
-              <p>
-                Track deployed templates, run simulations, and inspect AI decisions from one
-                consistent workspace.
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-export default function AppChrome({ children, onBackHome }) {
+export default function AppChrome({ children, onBackHome, theme, onToggleTheme }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="app-frame">
-      <Sidebar
-        open={sidebarOpen}
-        onToggle={() => setSidebarOpen((value) => !value)}
-        onBackHome={onBackHome}
-      />
+    <div className="app-shell">
+      <aside className={`sidebar ${sidebarOpen ? 'is-open' : 'is-collapsed'}`}>
+        <div className="sidebar-panel">
+          <div className="sidebar-brand">
+            <div className="brand-mark">A</div>
+            {sidebarOpen && (
+              <div>
+                <p className="eyebrow">Workflow Ops</p>
+                <h2>Hybrid Engine</h2>
+              </div>
+            )}
+            <button className="icon-button ghost" type="button" onClick={() => setSidebarOpen((value) => !value)}>
+              <ChevronLeft size={16} />
+            </button>
+          </div>
 
-      <div className="app-main">
-        <header className="app-header">
-          <div className="app-header-left">
+          <button className="back-home-button" type="button" onClick={onBackHome}>
+            <Home size={16} />
+            {sidebarOpen && <span>Back to landing page</span>}
+          </button>
+
+          <div className="sidebar-nav">
+            {navItems.map((item) => (
+              <SidebarItem key={item.label} {...item} open={sidebarOpen} />
+            ))}
+          </div>
+
+          <div className="sidebar-insight">
+            {sidebarOpen && (
+              <>
+                <div className="sidebar-insight-title">
+                  <Sparkles size={14} />
+                  What this product does
+                </div>
+                <p>
+                  It ingests business events, runs AI reasoning on the backend, chooses the
+                  right automation route, and proves which downstream actions actually ran.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </aside>
+
+      <section className="workspace">
+        <header className="topbar">
+          <div className="topbar-left">
             {!sidebarOpen && (
-              <button
-                className="icon-button subtle"
-                type="button"
-                onClick={() => setSidebarOpen(true)}
-              >
+              <button className="icon-button ghost" type="button" onClick={() => setSidebarOpen(true)}>
                 <Menu size={16} />
               </button>
             )}
-
             <div>
               <p className="eyebrow">Operations Console</p>
-              <h2 className="header-title">Workflow simulation dashboard</h2>
+              <h1>AI Workflow Automation</h1>
             </div>
           </div>
 
-          <div className="header-actions">
-            <div className="header-chip">API live</div>
+          <div className="topbar-actions">
+            <button
+              className="theme-toggle"
+              type="button"
+              onClick={onToggleTheme}
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              <span className={`theme-toggle-option ${theme === 'light' ? 'is-active' : ''}`}>
+                <SunMedium size={14} />
+                <span>Light</span>
+              </span>
+              <span className={`theme-toggle-option ${theme === 'dark' ? 'is-active' : ''}`}>
+                <Moon size={14} />
+                <span>Dark</span>
+              </span>
+            </button>
+            <div className="live-pill">Backend integrated</div>
             <button className="icon-button" type="button" aria-label="Notifications">
               <Bell size={16} />
             </button>
           </div>
         </header>
 
-        <main className="app-content">{children}</main>
-      </div>
+        <main className="workspace-main">{children}</main>
+      </section>
     </div>
   );
 }
