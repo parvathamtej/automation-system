@@ -1,10 +1,10 @@
-import { BrainCircuit, LifeBuoy, ShieldAlert, ChevronDown } from 'lucide-react';
+import { BrainCircuit, ShieldAlert, ChevronDown, ClipboardList } from 'lucide-react';
 import './TopNav.css';
 
 const navItems = [
   { id: 'incident', label: 'Incident Triage', icon: ShieldAlert },
   { id: 'learning', label: 'Learning Path', icon: BrainCircuit },
-  { id: 'support', label: 'Support Escalation', icon: LifeBuoy },
+  { id: 'assignment', label: 'Task Assignment', icon: ClipboardList },
 ];
 
 export default function TopNav({ route, onNavigate }) {
@@ -47,4 +47,3 @@ export default function TopNav({ route, onNavigate }) {
     </header>
   );
 }
-

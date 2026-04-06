@@ -5,7 +5,7 @@ import Background from './components/layout/Background';
 import Home from './pages/Home';
 import IncidentTriagePage from './pages/IncidentTriagePage';
 import LearningPathPage from './pages/LearningPathPage';
-import SupportEscalationPage from './pages/SupportEscalationPage';
+import TaskAssignmentPage from './pages/TaskAssignmentPage';
 
 function App() {
   const [route, setRoute] = useState(() => {
@@ -34,8 +34,8 @@ function App() {
       <IncidentTriagePage />
     ) : route === 'learning' ? (
       <LearningPathPage />
-    ) : route === 'support' ? (
-      <SupportEscalationPage />
+    ) : route === 'assignment' ? (
+      <TaskAssignmentPage />
     ) : (
       <Home onNavigate={navigate} />
     );

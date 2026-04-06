@@ -1,4 +1,4 @@
-import { BrainCircuit, LifeBuoy, ShieldAlert, ArrowRight, Play, Terminal, Database, Activity, Code, Cpu, Server, Globe } from 'lucide-react';
+import { BrainCircuit, ShieldAlert, ArrowRight, Play, Terminal, Database, Activity, Code, Cpu, Server, Globe, ClipboardList } from 'lucide-react';
 import './Home.css';
 import automationConcept from '../assets/automation_concept.png';
 
@@ -18,10 +18,10 @@ const workflows = [
     color: '#06b6d4'
   },
   {
-    id: 'support',
-    title: 'Support Escalation',
-    icon: LifeBuoy,
-    description: 'A heuristic decision engine for intelligent support request categorization.',
+    id: 'assignment',
+    title: 'Task Breakdown & Assignment',
+    icon: ClipboardList,
+    description: 'AI breaks down a goal, assigns tasks by role, and auto-emails the team with an Excel-ready report.',
     color: '#10b981'
   },
 ];

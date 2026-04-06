@@ -9,6 +9,11 @@ const { processWorkflow } = require('./workflow-runner');
 const { analyzeIncident, raiseIncidentTicket } = require('./src/services/incident-triage');
 const { generateLearningPath, confirmLearningPath, emailLearningPlanToUser } = require('./src/services/learning-path');
 const { analyzeSupportEscalation, confirmSupportEscalation } = require('./src/services/support-escalation');
+const {
+  analyzeTaskAssignment,
+  confirmTaskAssignment,
+  emailTaskReportToDevTeam,
+} = require('./src/services/task-assignment');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -178,6 +183,75 @@ app.post('/api/support-escalation/confirm', async (req, res) => {
   } catch (err) {
     console.error('Confirm support escalation error:', err.message);
     res.status(500).json({ error: err.message || 'Could not confirm escalation' });
+  }
+});
+
+app.post('/api/task-assignment/analyze', async (req, res) => {
+  try {
+    const analysis = await analyzeTaskAssignment(req.body);
+    res.json(analysis);
+  } catch (err) {
+    console.error('Task assignment error:', err.message);
+    res.status(400).json({ error: err.message || 'Task assignment failed' });
+  }
+});
+
+app.post('/api/task-assignment/confirm', async (req, res) => {
+  try {
+    const inputs = req.body?.inputs || {};
+    const analysis = req.body?.analysis || {};
+
+    if (!inputs.taskDescription) {
+      res.status(400).json({ error: 'Missing required inputs.taskDescription' });
+      return;
+    }
+
+    if (!Array.isArray(inputs.teamMembers) || !inputs.teamMembers.length) {
+      res.status(400).json({ error: 'Missing required inputs.teamMembers' });
+      return;
+    }
+
+    if (!analysis.summary || !Array.isArray(analysis.assignments)) {
+      res.status(400).json({ error: 'Missing required analysis fields' });
+      return;
+    }
+
+    const confirmation = await confirmTaskAssignment({ inputs, analysis });
+    res.json({
+      success: true,
+      confirmation,
+      message: 'Assignments created and emailed to the team.',
+    });
+  } catch (err) {
+    console.error('Confirm task assignment error:', err.message);
+    res.status(500).json({ error: err.message || 'Could not confirm task assignment' });
+  }
+});
+
+app.post('/api/task-assignment/email-dev-report', async (req, res) => {
+  try {
+    const inputs = req.body?.inputs || {};
+    const analysis = req.body?.analysis || {};
+
+    if (!inputs.taskDescription) {
+      res.status(400).json({ error: 'Missing required inputs.taskDescription' });
+      return;
+    }
+
+    if (!analysis.summary || !Array.isArray(analysis.assignments) || !analysis.assignments.length) {
+      res.status(400).json({ error: 'Missing required analysis.assignments' });
+      return;
+    }
+
+    const ticket = await emailTaskReportToDevTeam({ inputs, analysis });
+    res.json({
+      success: true,
+      ticket,
+      message: 'Task report sent to developers.',
+    });
+  } catch (err) {
+    console.error('Email dev report error:', err.message);
+    res.status(500).json({ error: err.message || 'Could not send dev report' });
   }
 });
 

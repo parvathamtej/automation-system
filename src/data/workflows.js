@@ -12,15 +12,14 @@ const workflowCatalog = [
     },
   },
   {
-    id: "support-escalation",
-    name: "Support Escalation",
-    category: "Customer Success",
-    summary: "Classifies ticket urgency, chooses response path, and alerts the right teams.",
-    triggers: ["New ticket", "Negative CSAT", "VIP customer reply"],
-    actions: ["Slack alert", "Priority queue routing", "Follow-up email"],
+    id: "task-assignment",
+    name: "AI Task Breakdown & Smart Assignment",
+    category: "Operations",
+    summary: "Breaks down a goal into steps, assigns by role, emails assignees, and produces an Excel-ready report.",
+    triggers: ["New project brief", "Sprint planning", "Incoming implementation request"],
+    actions: ["Task breakdown", "Smart assignment", "Email dispatch", "Excel report generation"],
     rules: {
-      urgencyThreshold: 80,
-      vipBoost: 15,
+      urgencyThreshold: 0,
     },
   },
   {
@@ -53,17 +52,18 @@ const scenarios = [
     },
   },
   {
-    id: "vip-support",
-    label: "VIP support ticket with frustration signals",
+    id: "task-assignment",
+    label: "Task breakdown and smart assignment",
     payload: {
-      workflowId: "support-escalation",
-      source: "Support portal",
-      customerName: "Aster Retail",
-      customerSegment: "VIP",
-      message: "Our notification workflow is failing and this is impacting customers right now.",
-      channel: "portal",
-      sentiment: "negative",
-      urgency: 88,
+      workflowId: "task-assignment",
+      taskDescription:
+        "Build the task assignment workflow: analyze goal, break into steps, assign owners by role, email assignees, and generate an Excel-ready report.",
+      deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      teamMembers: [
+        { name: "Asha", role: "Frontend (React)", email: "asha@example.com" },
+        { name: "Vikram", role: "Backend (Node/API)", email: "vikram@example.com" },
+        { name: "Neha", role: "QA / Testing", email: "neha@example.com" },
+      ],
     },
   },
   {
