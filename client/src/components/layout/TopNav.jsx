@@ -1,5 +1,5 @@
-import { BrainCircuit, LifeBuoy, ShieldAlert } from 'lucide-react';
-import { Button } from '../ui/Cards';
+import { BrainCircuit, LifeBuoy, ShieldAlert, ChevronDown } from 'lucide-react';
+import './TopNav.css';
 
 const navItems = [
   { id: 'incident', label: 'Incident Triage', icon: ShieldAlert },
@@ -11,32 +11,37 @@ export default function TopNav({ route, onNavigate }) {
   return (
     <header className="topnav">
       <div className="topnav-inner">
-        <button className="brand" type="button" onClick={() => onNavigate('home')}>
-          <span className="brand-mark">A</span>
-          <span className="brand-text">
-            <span className="brand-kicker">Automation Studio</span>
-            <strong className="brand-title">AI Workflow Engine</strong>
-          </span>
+        <button className="brand-new" type="button" onClick={() => onNavigate('home')}>
+          <div className="brand-logo">A</div>
+          <span className="brand-txt">Automation.io</span>
         </button>
 
-        <nav className="topnav-actions" aria-label="Primary navigation">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = route === item.id;
-            return (
-              <Button
-                key={item.id}
-                type="button"
-                variant={active ? 'primary' : 'secondary'}
-                size="s"
-                className="topnav-button"
-                onClick={() => onNavigate(item.id)}
-              >
-                <Icon size={14} />
-                {item.label}
-              </Button>
-            );
-          })}
+        <nav className="nav-links" aria-label="Primary navigation">
+          <button className="nav-link" onClick={() => onNavigate('home')}>Home</button>
+          <a href="#about" className="nav-link">About</a>
+          
+          <div className="nav-dropdown">
+            <button className="btn-execute">
+              Execute Workflow <ChevronDown size={18} />
+            </button>
+            <div className="nav-dropdown-content">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    className="dropdown-item"
+                    onClick={() => onNavigate(item.id)}
+                  >
+                    <div className="dropdown-item-icon">
+                      <Icon size={16} />
+                    </div>
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </nav>
       </div>
     </header>

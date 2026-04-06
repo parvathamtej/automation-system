@@ -1,0 +1,232 @@
+/* High-Density Workflow Form Styles */
+.aesthetic-form-wrapper {
+  padding: 60px 24px;
+  min-height: 100vh;
+  position: relative;
+  z-index: 10;
+  background: var(--bg-base);
+}
+
+.aesthetic-card-layout {
+  background: rgba(17, 24, 39, 0.4);
+  padding: 40px;
+  border-radius: var(--radius-l);
+  border: 1px solid var(--border-soft);
+  max-width: 900px;
+  margin: 0 auto;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(12px);
+}
+
+.workflow-header-block {
+  margin-bottom: 40px;
+  text-align: left;
+}
+
+.workflow-header-block h1 {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: var(--text-strong);
+  letter-spacing: -0.02em;
+}
+
+.workflow-header-block p {
+  font-size: var(--font-size-s);
+  color: var(--text-muted);
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.workflow-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field-group label {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-input-element {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-muted);
+  font-size: var(--font-size-s);
+  font-weight: 500;
+  color: var(--text-strong);
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.form-input-element:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(139, 92, 246, 0.05);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.form-input-element::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.workflow-submit-btn {
+  padding: 12px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.workflow-submit-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.workflow-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Enhanced Result Block */
+.results-preview-block {
+  margin-top: 50px;
+  padding: 32px;
+  border-radius: var(--radius-m);
+  background: rgba(139, 92, 246, 0.03);
+  border: 1px solid var(--border-strong);
+}
+
+.results-preview-block h2 {
+  font-size: var(--font-size-l);
+  font-weight: 800;
+  margin-bottom: 32px;
+  color: var(--text-strong);
+}
+
+.result-card-inner {
+  display: grid;
+  gap: 20px;
+}
+
+.result-item {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+}
+
+.result-item-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.result-item-content {
+  font-size: var(--font-size-s);
+  line-height: 1.6;
+  color: var(--text-body);
+}
+
+.metric-strip {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+}
+
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-box span {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.metric-box strong {
+  font-size: 1.2rem;
+  color: var(--text-strong);
+  font-weight: 800;
+}
+
+/* Vertical Process Timeline */
+.process-vertical-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.process-vertical-item {
+  display: flex;
+  gap: 20px;
+  position: relative;
+}
+
+.process-vertical-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 36px;
+  bottom: -20px;
+  width: 2px;
+  background: var(--border-soft);
+}
+
+.process-icon-container {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  z-index: 10;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.process-text h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--text-strong);
+}
+
+.process-text p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

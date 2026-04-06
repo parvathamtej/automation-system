@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import './App.css';
 import TopNav from './components/layout/TopNav';
+import Background from './components/layout/Background';
 import Home from './pages/Home';
 import IncidentTriagePage from './pages/IncidentTriagePage';
 import LearningPathPage from './pages/LearningPathPage';
@@ -40,6 +42,7 @@ function App() {
 
   return (
     <div className="app">
+      <Background />
       <TopNav route={route} onNavigate={navigate} />
       <main className="app-main">{page}</main>
     </div>

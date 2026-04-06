@@ -1,98 +1,163 @@
-import { BrainCircuit, LifeBuoy, ShieldAlert } from 'lucide-react';
-import { Button } from '../components/ui/Cards';
+import { BrainCircuit, LifeBuoy, ShieldAlert, ArrowRight, Play, Terminal, Database, Activity, Code, Cpu, Server, Globe } from 'lucide-react';
+import './Home.css';
+import automationConcept from '../assets/automation_concept.png';
 
 const workflows = [
   {
     id: 'incident',
-    title: 'AI Incident Triage & Response',
+    title: 'AI Incident Triage',
     icon: ShieldAlert,
-    description:
-      'Turn messy bug reports into a clear summary, likely root cause, and suggested next action — ready to raise as a ticket.',
-    bullets: ['Capture the signal', 'Generate structured triage', 'Raise a dev ticket'],
+    description: 'A structural simulation of real-time incident analysis and automated prioritization.',
+    color: '#8b5cf6'
   },
   {
     id: 'learning',
-    title: 'AI Personalized Learning Path Generator',
+    title: 'Learning Path Gen',
     icon: BrainCircuit,
-    description:
-      'Generate a personalized learning plan based on your goal, current level, and available time — with milestones and next steps.',
-    bullets: ['Understand goal + level', 'Create weekly plan', 'Confirm & share plan'],
+    description: 'An AI node designed to synthesize personalized educational curriculum from user goals.',
+    color: '#06b6d4'
   },
   {
     id: 'support',
-    title: 'AI-Powered Support Escalation System',
+    title: 'Support Escalation',
     icon: LifeBuoy,
-    description:
-      'Analyze support issues, estimate urgency, choose a response route, and simulate escalation actions with backend proof.',
-    bullets: ['Classify intent', 'Score urgency', 'Execute escalation steps'],
+    description: 'A heuristic decision engine for intelligent support request categorization.',
+    color: '#10b981'
   },
 ];
 
+const NodeHighlight = ({ icon: Icon, label, value }) => (
+  <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--border-soft)', display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '160px' }}>
+     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>
+        <Icon size={14} /> {label}
+     </div>
+     <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-strong)' }}>{value}</div>
+  </div>
+);
+
+const WorkflowStepCompact = ({ title, text, isLast }) => (
+  <div className="flow-step-compact">
+    {!isLast && <div className="flow-line" />}
+    <div className="flow-dot" />
+    <div className="flow-content-compact">
+      <h4>{title}</h4>
+      <p>{text}</p>
+    </div>
+  </div>
+);
+
+const TechCard = ({ workflow, onNavigate }) => {
+  const Icon = workflow.icon;
+  return (
+    <div className="tech-card" onClick={() => onNavigate(workflow.id)} style={{ cursor: 'pointer' }}>
+      <div className="tech-card-icon">
+        <Icon size={18} />
+      </div>
+      <h3>{workflow.title}</h3>
+      <p>{workflow.description}</p>
+      <div className="tech-card-btn" style={{ fontSize: '0.7rem' }}>
+        Run Automation <ArrowRight size={14} />
+      </div>
+    </div>
+  );
+};
+
 export default function Home({ onNavigate }) {
   return (
-    <div className="page">
-      <section className="hero">
-        <div className="hero-copy">
-          <h1>Build automation your team can actually trust.</h1>
-          <p className="hero-subtitle">
-            This demo shows how AI can turn real-world inputs into structured decisions and
-            repeatable workflows — with clear outputs, actionable steps, and confirmation.
-          </p>
-
-          <div className="hero-actions">
-            <Button variant="primary" onClick={() => onNavigate('incident')}>
-              Run Incident Triage
-            </Button>
-            <Button variant="secondary" onClick={() => onNavigate('learning')}>
-              Generate Learning Path
-            </Button>
-          </div>
+    <div className="landing-page">
+      {/* High-Tech Technical Hero Section */}
+      <section className="hero-technical" style={{ paddingBottom: '100px', minHeight: '80vh' }}>
+        <div style={{ padding: '4px 12px', background: 'rgba(139, 92, 246, 0.1)', color: 'var(--primary)', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, marginBottom: '24px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+          AUTOMATION SHOWCASE // PROJECT ALPHA
+        </div>
+        <h1>Execute <span>programmable intelligence</span></h1>
+        <p style={{ margin: '0 auto 48px', maxWidth: '640px' }}>
+          A structural portfolio of real-world AI logic implementations. Experience autonomous triage, curriculum synthesis, and intelligent request routing across distributed operational nodes.
+        </p>
+        
+        <div className="hero-actions-row" style={{ marginBottom: '64px' }}>
+          <button className="btn-primary-tech" onClick={() => onNavigate('incident')}>
+             Launch Project Showcase <Play size={14} fill="white" />
+          </button>
         </div>
 
-        <div className="hero-surface" aria-hidden="true">
-          <div className="hero-surface-inner" />
+        {/* Hero Content Addition per User Request (Filling the void) */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', animation: 'slideScaleUp 0.8s ease-out' }}>
+           <NodeHighlight icon={Cpu} label="Processing" value="Neural-V8" />
+           <NodeHighlight icon={Server} label="Latency" value="122ms" />
+           <NodeHighlight icon={Globe} label="Region" value="Distributed" />
+           <NodeHighlight icon={Code} label="Schema" value="JSON-LLM" />
         </div>
       </section>
 
-      <section className="section">
-        <div className="section-heading">
+      {/* Logic Architecture Section */}
+      <section className="container-tight" style={{ padding: '120px 0' }} id="about">
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 1fr', gap: '80px', alignItems: 'center' }}>
           <div>
-            <p className="eyebrow">Automated workflows</p>
-            <h2>Three workflows, one goal</h2>
-            <p>Reduce manual triage time and make outcomes consistent.</p>
+            <h2 style={{ fontSize: '1.8rem', marginBottom: '20px' }}>What is <span style={{ color: 'var(--primary)' }}>Automation?</span></h2>
+            <p style={{ color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '32px', fontSize: '0.88rem' }}>
+              Automation is the technology that enables processes and procedures to be executed with minimal human intervention. It transforms irregular inputs into predictable outcomes using predefined logic.
+            </p>
+            <div className="flow-viz">
+              <WorkflowStepCompact 
+                title="Trigger (The Data-In)" 
+                text="The specific event or piece of information that initiates the automated process." 
+              />
+              <WorkflowStepCompact 
+                title="Workflow Logic (The Processing)" 
+                text="A series of conditional rules and AI evaluations that determine the outcome." 
+              />
+              <WorkflowStepCompact 
+                title="Action (The Outcome)" 
+                text="The final result or operation performed automatically after processing." 
+                isLast
+              />
+            </div>
+          </div>
+
+          <div style={{ position: 'relative' }}>
+             <div style={{ 
+               background: 'rgba(17, 24, 39, 0.6)', 
+               borderRadius: '24px', 
+               border: '1px solid var(--border-soft)', 
+               overflow: 'hidden',
+               boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+             }}>
+                <img 
+                  src={automationConcept} 
+                  alt="Automation Concept" 
+                  style={{ width: '100%', height: 'auto', display: 'block', opacity: 0.8 }} 
+                />
+             </div>
+             {/* Decorative glow behind image */}
+             <div style={{ 
+               position: 'absolute', 
+               inset: '-20px', 
+               background: 'radial-gradient(circle, var(--primary) 0%, transparent 70%)', 
+               opacity: 0.1, 
+               zIndex: -1 
+             }} />
           </div>
         </div>
+      </section>
 
-        <div className="workflow-grid">
-          {workflows.map((workflow) => {
-            const Icon = workflow.icon;
-            return (
-              <article className="workflow-card" key={workflow.id}>
-                <div className="workflow-card-top">
-                  <div className="workflow-icon">
-                    <Icon size={18} />
-                  </div>
-                  <div className="table-chip">Automated</div>
-                </div>
-
-                <h3>{workflow.title}</h3>
-                <p>{workflow.description}</p>
-
-                <ol className="workflow-steps">
-                  {workflow.bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
-                  ))}
-                </ol>
-
-                <Button className="workflow-cta" variant="secondary" onClick={() => onNavigate(workflow.id)}>
-                  Execute workflow
-                </Button>
-              </article>
-            );
-          })}
+      {/* Project Workflow Showcase */}
+      <section style={{ background: 'rgba(139, 92, 246, 0.02)', padding: '120px 0', borderTop: '1px solid var(--border-soft)' }}>
+        <div className="container-tight">
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>Functional Case Studies</h2>
+            <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto', fontSize: '0.85rem' }}>
+              This project demonstrates three distinct domains where AI-driven logic can autonomously manage decision-making streams.
+            </p>
+          </div>
+          
+          <div className="technical-grid">
+            {workflows.map((workflow) => (
+              <TechCard key={workflow.id} workflow={workflow} onNavigate={onNavigate} />
+            ))}
+          </div>
         </div>
       </section>
     </div>
   );
 }
-

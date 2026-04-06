@@ -1,28 +1,40 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, LifeBuoy, Siren, Sparkles } from 'lucide-react';
-import { Button } from '../components/ui/Cards';
+import { CheckCircle2, LifeBuoy, Siren, Activity, Play, Send, Inbox, Filter, Zap } from 'lucide-react';
 import Modal from '../components/ui/Modal';
+import './Workflow.css';
 
-const whereOptions = ['Support portal', 'Email', 'In-app chat', 'Phone', 'Other'];
-const segmentOptions = ['General', 'SMB', 'Enterprise', 'VIP'];
+const whereOptions = ['Support portal', 'Email Relay', 'In-app chat', 'Phone Interface', 'Internal Routing'];
+const segmentOptions = ['General Account', 'SMB Entity', 'Enterprise Node', 'VIP Priority'];
 const sentimentOptions = ['neutral', 'positive', 'negative'];
+
+const ProcessStep = ({ icon: Icon, title, desc }) => (
+  <div className="process-vertical-item">
+    <div className="process-icon-container">
+      <Icon size={18} />
+    </div>
+    <div className="process-text">
+      <h4>{title}</h4>
+      <p>{desc}</p>
+    </div>
+  </div>
+);
 
 function Field({ label, children }) {
   return (
-    <label className="field">
-      <span className="field-label">{label}</span>
+    <div className="form-field-group">
+      <label>{label}</label>
       {children}
-    </label>
+    </div>
   );
 }
 
 export default function SupportEscalationPage() {
-  const [customerName, setCustomerName] = useState('Aster Retail');
+  const [customerName, setCustomerName] = useState('Global Retail Node');
   const [source, setSource] = useState(whereOptions[0]);
   const [customerSegment, setCustomerSegment] = useState(segmentOptions[2]);
   const [sentiment, setSentiment] = useState(sentimentOptions[0]);
   const [urgency, setUrgency] = useState(70);
-  const [message, setMessage] = useState('Our notification workflow is failing and this is impacting customers right now.');
+  const [message, setMessage] = useState('Critical failure in notification workflow engine; impacting 2k concurrent sessions.');
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
@@ -36,25 +48,15 @@ export default function SupportEscalationPage() {
     event.preventDefault();
     setError(null);
     setAnalysis(null);
-    setShowConfirmation(false);
     setIsAnalyzing(true);
-
     try {
       const response = await fetch('/api/support-escalation/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName,
-          source,
-          customerSegment,
-          sentiment,
-          urgency,
-          message,
-          channel: 'portal',
-        }),
+        body: JSON.stringify({ customerName, source, customerSegment, sentiment, urgency, message, channel: 'portal' }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data?.error || 'Could not analyze support issue');
+      if (!response.ok) throw new Error(data?.error || 'Analysis Engine Fault');
       setAnalysis(data);
     } catch (requestError) {
       setError(requestError.message);
@@ -67,25 +69,14 @@ export default function SupportEscalationPage() {
     if (!canConfirm) return;
     setError(null);
     setIsConfirming(true);
-
-    const inputs = {
-      customerName,
-      source,
-      customerSegment,
-      sentiment,
-      urgency,
-      message,
-      channel: 'portal',
-    };
-
     try {
       const response = await fetch('/api/support-escalation/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputs, analysis }),
+        body: JSON.stringify({ inputs: { customerName, source, customerSegment, sentiment, urgency, message }, analysis }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data?.error || 'Could not raise escalation');
+      if (!response.ok) throw new Error(data?.error || 'Escalation Failure');
       setShowConfirmation(true);
     } catch (requestError) {
       setError(requestError.message);
@@ -95,167 +86,137 @@ export default function SupportEscalationPage() {
   }
 
   return (
-    <div className="page">
-      <section className="section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Workflow</p>
-            <h2>AI-Powered Support Escalation System</h2>
-            <p>
-              Analyze a support request, estimate urgency, recommend a response route, and confirm to raise an escalation
-              notification (demo: SMTP or console log).
-            </p>
-          </div>
+    <div className="aesthetic-form-wrapper">
+       <div className="workflow-overview-section container-tight">
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1.2fr) 1fr', gap: '64px', marginBottom: '80px', alignItems: 'flex-start' }}>
+           <div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--success)', marginBottom: '16px' }}>Simulation // Support Node 03</div>
+              <h1 style={{ fontSize: '2.4rem', fontWeight: 800, marginBottom: '24px', letterSpacing: '-0.03em' }}>Support Escalation Engine</h1>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '32px' }}>
+                Managing high-volume support queues in multi-tenant environments is complex. This simulation node uses heuristic sentiment analysis and urgency quantification to intelligently categorize and route support requests, ensuring high-priority accounts are prioritized.
+              </p>
+              
+              <div style={{ padding: '24px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--border-soft)' }}>
+                 <h4 style={{ fontSize: '0.75rem', fontWeight: 800, marginBottom: '20px', textTransform: 'uppercase' }}>Workflow Logic Path</h4>
+                 <div className="process-vertical-list">
+                    <ProcessStep 
+                      icon={Inbox} 
+                      title="Ticket Ingestion" 
+                      desc="Pulls customer account data and message context from source channels." 
+                    />
+                    <ProcessStep 
+                      icon={Filter} 
+                      title="Urgency Heuristics" 
+                      desc="Calculates a score based on account segment, sentiment, and reported latency." 
+                    />
+                    <ProcessStep 
+                      icon={Zap} 
+                      title="Direct Route Mapping" 
+                      desc="Assigns the prioritized request to specialized engineering or success clusters." 
+                    />
+                 </div>
+              </div>
+           </div>
+
+           <div className="aesthetic-card-layout" style={{ margin: 0, width: '100%' }}>
+              <div style={{ marginBottom: '32px' }}>
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 800, marginBottom: '8px' }}>Active Signal Terminal</h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Input support request context for prioritized routing.</p>
+              </div>
+
+              <form className="workflow-form-container" onSubmit={analyze}>
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                    <Field label="Account Identity">
+                      <input className="form-input-element" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required style={{ fontFamily: 'var(--font-mono)' }} />
+                    </Field>
+                    <Field label="Channel">
+                       <select className="form-input-element" value={source} onChange={(e) => setSource(e.target.value)}>
+                        {whereOptions.map((option) => (<option key={option}>{option}</option>))}
+                      </select>
+                    </Field>
+                 </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                  <Field label="Tier">
+                    <select className="form-input-element" value={customerSegment} onChange={(e) => setCustomerSegment(e.target.value)}>
+                      {segmentOptions.map((option) => (<option key={option}>{option}</option>))}
+                    </select>
+                  </Field>
+                  <Field label="Sentiment">
+                    <select className="form-input-element" value={sentiment} onChange={(e) => setSentiment(e.target.value)}>
+                      {sentimentOptions.map((option) => (<option key={option}>{option}</option>))}
+                    </select>
+                  </Field>
+                  <Field label="Urgency">
+                    <input type="number" className="form-input-element" min="1" max="100" value={urgency} onChange={(e) => setUrgency(Number(e.target.value))} />
+                  </Field>
+                </div>
+
+                <Field label="Signal Context">
+                  <textarea className="form-input-element" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} required style={{ fontFamily: 'var(--font-mono)' }} />
+                </Field>
+
+                <button type="submit" className="workflow-submit-btn" disabled={isAnalyzing} style={{ background: 'var(--success)' }}>
+                  {isAnalyzing ? <Activity className="animate-spin" size={14} /> : <Send size={14} />}
+                  {isAnalyzing ? 'Evaluating Signal...' : 'Calculate Priority'}
+                </button>
+              </form>
+
+              {error && (
+                <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '8px', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.72rem' }}>
+                  <strong>Engine Error:</strong> {error}
+                </div>
+              )}
+
+              {analysis && (
+                <div className="results-preview-block" style={{ marginTop: '32px' }}>
+                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="metric-box">
+                        <span>Status</span>
+                        <strong style={{ fontSize: '0.9rem', color: 'var(--success)' }}>ROUTED</strong>
+                      </div>
+                   </div>
+                  <p style={{ marginTop: '16px', fontSize: 'var(--font-size-s)', lineHeight: 1.7, opacity: 0.8, marginBottom: '24px' }}>{analysis.summary}</p>
+                  
+                  <div className="result-card-inner" style={{ gap: '12px' }}>
+                    <div className="result-item" style={{ padding: '12px' }}>
+                      <span className="result-item-label">Recommended Route</span>
+                      <p className="result-item-content" style={{ fontWeight: 800, color: 'var(--success)', fontSize: '0.9rem' }}>{analysis.recommended_route}</p>
+                    </div>
+                    <div className="result-item" style={{ padding: '12px' }}>
+                      <span className="result-item-label">Suggested Action</span>
+                      <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.suggested_action}</p>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    type="button" 
+                    className="workflow-submit-btn" 
+                    style={{ background: 'var(--primary)', marginTop: '24px', width: '100%', fontSize: '0.75rem' }}
+                    disabled={!canConfirm || isConfirming} 
+                    onClick={confirm}
+                  >
+                    {isConfirming ? <Activity className="animate-spin" size={12} /> : <Play size={12} />}
+                    {isConfirming ? 'Dispatching...' : 'Acknowledge Priority Signal'}
+                  </button>
+                </div>
+              )}
+           </div>
         </div>
+      </div>
 
-        <div className="steps-card">
-          <h3>What to expect</h3>
-          <ol>
-            <li>Describe the issue and customer context.</li>
-            <li>AI classifies intent, scores urgency, and recommends a route.</li>
-            <li>You confirm to raise an escalation notification.</li>
-          </ol>
-        </div>
-      </section>
-
-      <section className="workflow-split">
-        <form className="workflow-panel" onSubmit={analyze}>
-          <div className="panel-header">
-            <div className="pill subtle-pill">
-              <LifeBuoy size={14} />
-              Inputs
+      {showConfirmation && (
+        <Modal title="Signal Routing Protocol" onClose={() => setShowConfirmation(false)}>
+          <div style={{ textAlign: 'center', padding: '24px' }}>
+            <div style={{ width: '60px', height: '60px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', display: 'grid', placeItems: 'center', margin: '0 auto 24px', border: '1px solid var(--success)' }}>
+              <Siren size={32} color="var(--success)" />
             </div>
-            <h3>Support request</h3>
-            <p>Enter a realistic issue to see the escalation logic.</p>
-          </div>
-
-          <Field label="Customer name">
-            <input className="input-dark" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required />
-          </Field>
-
-          <div className="form-grid">
-            <Field label="Where did this happen?">
-              <select className="input-dark" value={source} onChange={(e) => setSource(e.target.value)}>
-                {whereOptions.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Customer segment">
-              <select className="input-dark" value={customerSegment} onChange={(e) => setCustomerSegment(e.target.value)}>
-                {segmentOptions.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Sentiment">
-              <select className="input-dark" value={sentiment} onChange={(e) => setSentiment(e.target.value)}>
-                {sentimentOptions.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Urgency (1-100)">
-              <input
-                className="input-dark"
-                type="number"
-                min="1"
-                max="100"
-                value={urgency}
-                onChange={(e) => setUrgency(Number(e.target.value))}
-              />
-            </Field>
-          </div>
-
-          <Field label="Issue details">
-            <textarea className="input-dark" rows={5} value={message} onChange={(e) => setMessage(e.target.value)} required />
-          </Field>
-
-          <div className="form-actions">
-            <Button variant="primary" type="submit" disabled={isAnalyzing}>
-              {isAnalyzing ? 'Analyzing...' : 'Analyze Support Issue'}
-            </Button>
-          </div>
-
-          {error ? (
-            <div className="error-panel">
-              <h3>Could not complete request</h3>
-              <p>{error}</p>
-            </div>
-          ) : null}
-        </form>
-
-        <div className="workflow-panel">
-          <div className="panel-header">
-            <div className="pill subtle-pill">
-              <Sparkles size={14} />
-              Analysis
-            </div>
-            <h3>Escalation recommendation</h3>
-            <p>Review the route and suggested next action.</p>
-          </div>
-
-          {analysis ? (
-            <div className="result-card">
-              <div className="result-head">
-                <div className="result-icon">
-                  <Siren size={18} />
-                </div>
-                <div>
-                  <h4>Summary</h4>
-                  <p>{analysis.summary}</p>
-                </div>
-              </div>
-
-              <div className="result-grid">
-                <div>
-                  <span>Severity</span>
-                  <strong>{analysis.severity?.toUpperCase?.() || 'UNKNOWN'}</strong>
-                </div>
-                <div>
-                  <span>Urgency score</span>
-                  <strong>{analysis.urgency_score}/100</strong>
-                </div>
-                <div>
-                  <span>Recommended route</span>
-                  <strong>{analysis.recommended_route}</strong>
-                </div>
-              </div>
-
-              <div className="result-list">
-                <h4>Reason</h4>
-                <p>{analysis.route_reason}</p>
-                <h4>Suggested action</h4>
-                <p>{analysis.suggested_action}</p>
-              </div>
-
-              <div className="form-actions">
-                <Button variant="secondary" type="button" disabled={!canConfirm || isConfirming} onClick={confirm}>
-                  {isConfirming ? 'Raising...' : 'Confirm & Raise Escalation'}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="empty-runtime">
-              <Siren size={28} />
-              <h3>No analysis yet</h3>
-              <p>Analyze a support issue to see the recommended route.</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {showConfirmation ? (
-        <Modal title="Escalation raised" onClose={() => setShowConfirmation(false)}>
-          <div className="success-panel">
-            <h3>
-              <CheckCircle2 size={16} /> Confirmed
-            </h3>
-            <p>Escalation raised. Our support team is working on it.</p>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '12px' }}>Escalation Complete</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>The escalation signal has been successfully propagated to the High-Priority Response Cluster.</p>
+            <button className="workflow-submit-btn" style={{ padding: '10px 24px', margin: '24px auto 0' }} onClick={() => setShowConfirmation(false)}>End Session</button>
           </div>
         </Modal>
-      ) : null}
+      )}
     </div>
   );
 }
-

@@ -1,32 +1,30 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, FileText, Search, Wrench } from 'lucide-react';
-import { Button } from '../ui/Cards';
+import { CheckCircle2, ShieldAlert, Cpu, Activity, Play, ChevronRight, FileText, CheckSquare } from 'lucide-react';
 import Modal from '../ui/Modal';
+import '../../pages/Workflow.css';
 
-const whereOptions = [
-  'Login / Authentication',
-  'Payments',
-  'Dashboard',
-  'API / Backend',
-  'Other',
-];
-
-const observedOptions = [
-  'Page not loading',
-  'Something is slow',
-  'Error message shown',
-  'App crashed',
-  'Action failed',
-];
-
+const whereOptions = ['Login / Auth', 'Payments', 'Dashboard', 'API / Backend', 'Other'];
+const observedOptions = ['Page not loading', 'Latency spikes', 'Error messages', 'App crash', 'Action failed'];
 const impactOptions = ['Minor', 'Moderate', 'Severe'];
+
+const ProcessStep = ({ icon: Icon, title, desc }) => (
+  <div className="process-vertical-item">
+    <div className="process-icon-container">
+      <Icon size={18} />
+    </div>
+    <div className="process-text">
+      <h4>{title}</h4>
+      <p>{desc}</p>
+    </div>
+  </div>
+);
 
 function Field({ label, children }) {
   return (
-    <label className="field">
-      <span className="field-label">{label}</span>
+    <div className="form-field-group">
+      <label>{label}</label>
       {children}
-    </label>
+    </div>
   );
 }
 
@@ -42,42 +40,23 @@ export default function IncidentTriage() {
   const [ticketMessage, setTicketMessage] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const canRaise = useMemo(() => {
-    return Boolean(
-      analysis?.summary &&
-        analysis?.root_cause &&
-        analysis?.suggested_action &&
-        whatWentWrong.trim()
-    );
-  }, [analysis, whatWentWrong]);
+  const canRaise = useMemo(() => Boolean(analysis?.summary && whatWentWrong.trim()), [analysis, whatWentWrong]);
 
   async function analyzeIssue(event) {
     event.preventDefault();
     setError(null);
-    setTicketMessage(null);
-    setShowConfirmation(false);
+    setAnalysis(null);
     setIsAnalyzing(true);
-
     try {
       const response = await fetch('/api/incident-triage/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          whatWentWrong,
-          where,
-          observedIssue,
-          impact,
-        }),
+        body: JSON.stringify({ whatWentWrong, where, observedIssue, impact }),
       });
-
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || 'Could not analyze the issue');
-      }
-
+      if (!response.ok) throw new Error(data?.error || 'Analysis engine failure');
       setAnalysis(data);
     } catch (requestError) {
-      setAnalysis(null);
       setError(requestError.message);
     } finally {
       setIsAnalyzing(false);
@@ -87,29 +66,16 @@ export default function IncidentTriage() {
   async function raiseTicket() {
     if (!canRaise) return;
     setError(null);
-    setTicketMessage(null);
     setIsRaising(true);
-
-    const inputs = {
-      whatWentWrong,
-      where,
-      observedIssue,
-      impact,
-    };
-
     try {
       const response = await fetch('/api/incident-triage/raise-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputs, analysis }),
+        body: JSON.stringify({ inputs: { whatWentWrong, where, observedIssue, impact }, analysis }),
       });
-
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || 'Could not raise the ticket');
-      }
-
-      setTicketMessage(data?.message || 'Your ticket has been raised. Our development team is working on it.');
+      if (!response.ok) throw new Error(data?.error || 'Ticket dispatch failure');
+      setTicketMessage(data?.message);
       setShowConfirmation(true);
     } catch (requestError) {
       setError(requestError.message);
@@ -119,129 +85,138 @@ export default function IncidentTriage() {
   }
 
   return (
-    <>
-      <section className="workflow-split">
-        <form className="workflow-panel" onSubmit={analyzeIssue}>
-          <div className="panel-header">
-            <div className="pill subtle-pill">
-              <FileText size={14} />
-              Inputs
-            </div>
-            <h3>Describe the incident</h3>
-            <p>Use plain language — the AI will structure it.</p>
-          </div>
+    <div className="aesthetic-form-wrapper">
+      <div className="workflow-overview-section container-tight">
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1.2fr) 1fr', gap: '64px', marginBottom: '80px', alignItems: 'flex-start' }}>
+           <div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--primary)', marginBottom: '16px' }}>Simulation // Triage Node 01</div>
+              <h1 style={{ fontSize: '2.4rem', fontWeight: 800, marginBottom: '24px', letterSpacing: '-0.03em' }}>AI Incident Triage & Response</h1>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '32px' }}>
+                When users face system crashes or failures, manual debugging consumes valuable developer time. This automation simulates a real-time response system that analyzes problem reports and generates structured summaries, hypothesize root causes, and proposes immediate mitigation vectors.
+              </p>
+              
+              <div style={{ padding: '24px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--border-soft)' }}>
+                 <h4 style={{ fontSize: '0.75rem', fontWeight: 800, marginBottom: '20px', textTransform: 'uppercase' }}>Workflow Logic Path</h4>
+                 <div className="process-vertical-list">
+                    <ProcessStep 
+                      icon={FileText} 
+                      title="Input Analysis" 
+                      desc="Collects raw incident telemetry and user-reported symptoms." 
+                    />
+                    <ProcessStep 
+                      icon={Cpu} 
+                      title="Pattern Evaluation" 
+                      desc="Cross-references symptoms with known error classes and system domains." 
+                    />
+                    <ProcessStep 
+                      icon={CheckSquare} 
+                      title="Structured Dispatch" 
+                      desc="Routes formulated solutions to the correct response queue." 
+                    />
+                 </div>
+              </div>
+           </div>
 
-          <Field label="What went wrong?">
-            <input
-              className="input-dark"
-              value={whatWentWrong}
-              onChange={(e) => setWhatWentWrong(e.target.value)}
-              placeholder="App crashed when I clicked login"
-              required
-            />
-          </Field>
-
-          <div className="form-grid">
-            <Field label="Where did this happen?">
-              <select className="input-dark" value={where} onChange={(e) => setWhere(e.target.value)}>
-                {whereOptions.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="What did you see?">
-              <select
-                className="input-dark"
-                value={observedIssue}
-                onChange={(e) => setObservedIssue(e.target.value)}
-              >
-                {observedOptions.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="Impact level">
-              <select className="input-dark" value={impact} onChange={(e) => setImpact(e.target.value)}>
-                {impactOptions.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </Field>
-          </div>
-
-          <div className="form-actions">
-            <Button type="submit" variant="primary" disabled={isAnalyzing}>
-              {isAnalyzing ? 'Analyzing...' : 'Analyze Issue'}
-            </Button>
-          </div>
-
-          {error ? (
-            <div className="error-panel">
-              <h3>
-                <AlertTriangle size={16} /> Could not complete request
-              </h3>
-              <p>{error}</p>
-            </div>
-          ) : null}
-        </form>
-
-        <div className="workflow-panel">
-          <div className="panel-header">
-            <div className="pill subtle-pill">
-              <Search size={14} />
-              Analysis
-            </div>
-            <h3>Structured triage</h3>
-            <p>Review the summary and confirm to raise a ticket.</p>
-          </div>
-
-          {analysis ? (
-            <div className="result-card">
-              {analysis?.severity ? <div className="table-chip">{analysis.severity.toUpperCase()} severity</div> : null}
-
-              <div className="result-list">
-                <div>
-                  <h4>Summary</h4>
-                  <p>{analysis.summary}</p>
-                </div>
-                <div>
-                  <h4>Root Cause</h4>
-                  <p>{analysis.root_cause}</p>
-                </div>
-                <div>
-                  <h4>Suggested Action</h4>
-                  <p>{analysis.suggested_action}</p>
-                </div>
+           <div className="aesthetic-card-layout" style={{ margin: 0, width: '100%' }}>
+              <div style={{ marginBottom: '32px' }}>
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 800, marginBottom: '8px' }}>Active Input Terminal</h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Supply incident context to begin logic loop.</p>
               </div>
 
-              <div className="form-actions">
-                <Button type="button" variant="secondary" disabled={!canRaise || isRaising} onClick={raiseTicket}>
-                  {isRaising ? 'Raising ticket...' : 'Confirm & Raise Ticket'}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="empty-runtime">
-              <Wrench size={28} />
-              <h3>No analysis yet</h3>
-              <p>Analyze an incident to generate a structured triage response.</p>
-            </div>
-          )}
+              <form className="workflow-form-container" onSubmit={analyzeIssue}>
+                <Field label="Entropy Observation">
+                  <textarea
+                    className="form-input-element"
+                    rows={4}
+                    value={whatWentWrong}
+                    onChange={(e) => setWhatWentWrong(e.target.value)}
+                    placeholder="Describe deviation from expected behavior..."
+                    required
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                  />
+                </Field>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  <Field label="System Domain">
+                    <select className="form-input-element" value={where} onChange={(e) => setWhere(e.target.value)}>
+                      {whereOptions.map((option) => (<option key={option}>{option}</option>))}
+                    </select>
+                  </Field>
+                  <Field label="Failure Class">
+                    <select className="form-input-element" value={observedIssue} onChange={(e) => setObservedIssue(e.target.value)}>
+                      {observedOptions.map((option) => (<option key={option}>{option}</option>))}
+                    </select>
+                  </Field>
+                </div>
+
+                <Field label="Priority Class">
+                  <select className="form-input-element" value={impact} onChange={(e) => setImpact(e.target.value)}>
+                    {impactOptions.map((option) => (<option key={option}>{option}</option>))}
+                  </select>
+                </Field>
+
+                <button type="submit" className="workflow-submit-btn" disabled={isAnalyzing}>
+                  {isAnalyzing ? <Activity className="animate-spin" size={14} /> : <Play size={14} />}
+                  {isAnalyzing ? 'Analyzing Patterns...' : 'Execute Triage Engine'}
+                </button>
+              </form>
+
+              {error && (
+                <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '8px', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.72rem' }}>
+                  <strong>Engine Error:</strong> {error}
+                </div>
+              )}
+
+              {analysis && (
+                <div className="results-preview-block" style={{ marginTop: '32px' }}>
+                  <div className="metric-strip" style={{ gap: '16px', padding: '12px' }}>
+                    <div className="metric-box">
+                      <span>Status</span>
+                      <strong style={{ fontSize: '0.9rem', color: 'var(--primary)' }}>DONE</strong>
+                    </div>
+                    <div className="metric-box">
+                      <span>Conf</span>
+                      <strong style={{ fontSize: '0.9rem' }}>94%</strong>
+                    </div>
+                  </div>
+
+                  <div className="result-card-inner" style={{ gap: '12px' }}>
+                    <div className="result-item" style={{ padding: '12px' }}>
+                      <span className="result-item-label">Summary</span>
+                      <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.summary}</p>
+                    </div>
+                    <div className="result-item" style={{ padding: '12px' }}>
+                      <span className="result-item-label">Likely Root Cause</span>
+                      <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.root_cause}</p>
+                    </div>
+                    <div className="result-item" style={{ padding: '12px', borderLeft: '2px solid var(--primary)' }}>
+                      <span className="result-item-label">Suggested Mitigation</span>
+                      <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.suggested_action}</p>
+                    </div>
+                  </div>
+
+                  <button type="button" className="workflow-submit-btn" style={{ background: 'var(--primary)', marginTop: '24px', width: '100%', fontSize: '0.75rem' }} disabled={!canRaise || isRaising} onClick={raiseTicket}>
+                    {isConfirming ? <Activity className="animate-spin" size={12} /> : <Play size={12} />}
+                    {isRaising ? 'Dispatching Signal...' : 'Notify Response Endpoint'}
+                  </button>
+                </div>
+              )}
+           </div>
         </div>
-      </section>
+      </div>
 
-      {showConfirmation ? (
-        <Modal title="Ticket raised" onClose={() => setShowConfirmation(false)}>
-          <div className="success-panel">
-            <h3>
-              <CheckCircle2 size={16} /> Confirmed
-            </h3>
-            <p>{ticketMessage || 'Your ticket has been raised. Our development team is working on it.'}</p>
+      {showConfirmation && (
+        <Modal title="Workflow Termination" onClose={() => setShowConfirmation(false)}>
+          <div style={{ textAlign: 'center', padding: '24px' }}>
+            <div style={{ width: '60px', height: '60px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', display: 'grid', placeItems: 'center', margin: '0 auto 20px', border: '1px solid var(--success)' }}>
+              <CheckCircle2 size={32} color="var(--success)" />
+            </div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '12px' }}>Signal Dispatched</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ticketMessage || 'The incident signal has been successfully routed to the prioritized response endpoint.'}</p>
+            <button className="workflow-submit-btn" style={{ padding: '10px 24px', margin: '24px auto 0' }} onClick={() => setShowConfirmation(false)}>Acknowledge</button>
           </div>
         </Modal>
-      ) : null}
-    </>
+      )}
+    </div>
   );
 }
