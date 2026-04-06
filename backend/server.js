@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -8,7 +8,6 @@ const { workflowCatalog, scenarios } = require('./src/data/workflows');
 const { processWorkflow } = require('./workflow-runner');
 const { analyzeIncident, raiseIncidentTicket } = require('./src/services/incident-triage');
 const { generateLearningPath, confirmLearningPath, emailLearningPlanToUser } = require('./src/services/learning-path');
-const { analyzeSupportEscalation, confirmSupportEscalation } = require('./src/services/support-escalation');
 const {
   analyzeTaskAssignment,
   confirmTaskAssignment,
@@ -17,7 +16,7 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const CLIENT_DIST_DIR = path.join(__dirname, 'client', 'dist');
+const CLIENT_DIST_DIR = path.join(__dirname, '..', 'frontend', 'dist');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 app.use(cors());
@@ -146,43 +145,6 @@ app.post('/api/learning-path/email-plan', async (req, res) => {
   } catch (err) {
     console.error('Email learning plan error:', err.message);
     res.status(500).json({ error: err.message || 'Could not email plan' });
-  }
-});
-
-app.post('/api/support-escalation/analyze', async (req, res) => {
-  try {
-    const analysis = await analyzeSupportEscalation(req.body);
-    res.json(analysis);
-  } catch (err) {
-    console.error('Support escalation error:', err.message);
-    res.status(400).json({ error: err.message || 'Support escalation failed' });
-  }
-});
-
-app.post('/api/support-escalation/confirm', async (req, res) => {
-  try {
-    const inputs = req.body?.inputs || {};
-    const analysis = req.body?.analysis || {};
-
-    if (!inputs.message) {
-      res.status(400).json({ error: 'Missing required inputs.message' });
-      return;
-    }
-
-    if (!analysis.summary || !analysis.recommended_route || !analysis.suggested_action) {
-      res.status(400).json({ error: 'Missing required analysis fields' });
-      return;
-    }
-
-    const confirmation = await confirmSupportEscalation({ inputs, analysis });
-    res.json({
-      success: true,
-      confirmation,
-      message: 'Escalation raised. Our support team is on it.',
-    });
-  } catch (err) {
-    console.error('Confirm support escalation error:', err.message);
-    res.status(500).json({ error: err.message || 'Could not confirm escalation' });
   }
 });
 

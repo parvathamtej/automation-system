@@ -34,7 +34,7 @@ function App() {
       <IncidentTriagePage />
     ) : route === 'learning' ? (
       <LearningPathPage />
-    ) : route === 'assignment' ? (
+    ) : route === 'assignment' || route === 'support' ? (
       <TaskAssignmentPage />
     ) : (
       <Home onNavigate={navigate} />

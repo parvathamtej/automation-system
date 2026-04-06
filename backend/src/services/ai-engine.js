@@ -11,12 +11,6 @@ function classifyIntent(message, workflowId) {
     return "General lead";
   }
 
-  if (workflowId === "support-escalation") {
-    if (text.includes("failing") || text.includes("impacting")) return "Service disruption";
-    if (text.includes("bug") || text.includes("error")) return "Technical incident";
-    return "General support";
-  }
-
   if (workflowId === "renewal-rescue") {
     if (text.includes("expires") || text.includes("drop")) return "Churn risk";
     if (text.includes("payment")) return "Revenue risk";
@@ -63,13 +57,6 @@ function determineRoute(payload, workflow, score, intent) {
       return {
         label: "Fast-track to sales orchestration",
         reason: `${intent} exceeded the qualification threshold and needs immediate sales follow-up.`,
-      };
-    }
-
-    if (workflow.id === "support-escalation") {
-      return {
-        label: "Priority incident response",
-        reason: `${intent} shows urgency above the escalation threshold and requires rapid handling.`,
       };
     }
 

@@ -2,12 +2,12 @@
   "name": "ai-driven-workflow-automation",
   "version": "1.0.0",
   "description": "Hybrid AI-driven reconfigurable workflow automation demo",
-  "main": "server.js",
+  "main": "backend/server.js",
   "scripts": {
     "dev": "node scripts/dev.js",
-    "start": "node server.js",
-    "build": "npm --prefix client run build",
-    "client": "npm --prefix client run dev"
+    "start": "node backend/server.js",
+    "build": "npm --prefix frontend run build",
+    "client": "npm --prefix frontend run dev"
   },
   "keywords": [
     "ai",

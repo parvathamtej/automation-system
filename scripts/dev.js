@@ -2,7 +2,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 const rootDir = path.resolve(__dirname, '..');
-const clientDir = path.join(rootDir, 'client');
+const clientDir = path.join(rootDir, 'frontend');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 const children = [];
@@ -36,7 +36,7 @@ function startProcess(name, command, args, cwd, extraEnv = {}) {
   return child;
 }
 
-const backend = startProcess('backend', 'node', ['server.js'], rootDir);
+const backend = startProcess('backend', 'node', ['backend/server.js'], rootDir);
 const frontend = startProcess('frontend', npmCommand, ['run', 'dev'], clientDir);
 
 function shutdown(signal) {

@@ -86,8 +86,6 @@ async function executeActions(payload, workflow, analysis) {
 
         if (workflow.id === 'lead-qualification') {
           subject = `[Lead Qualified] ${payload.customerName} - ${analysis.intent}`;
-        } else if (workflow.id === 'support-escalation') {
-          subject = `[Support Escalation] ${payload.customerName} - Urgency ${analysis.urgencyScore}`;
         } else if (workflow.id === 'renewal-rescue') {
           subject = `[Renewal Risk] ${payload.customerName} - Intervention Required`;
         } else {

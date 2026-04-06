@@ -32,7 +32,6 @@ export default function LearningPathPage() {
   const [currentLevel, setCurrentLevel] = useState(levelOptions[1]);
   const [timePerDay, setTimePerDay] = useState(timePerDayOptions[1]);
   const [goalOrDeadline, setGoalOrDeadline] = useState('Production Portfolio Deployment');
-  const [background, setBackground] = useState('JavaScript ES6+ proficiency; basic DOM Manipulation exposure.');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [plan, setPlan] = useState(null);
   const [error, setError] = useState(null);
@@ -47,8 +46,8 @@ export default function LearningPathPage() {
   const canEmail = useMemo(() => email.trim().includes('@'), [email]);
 
   const inputs = useMemo(
-    () => ({ topic, currentLevel, timePerDay, goalOrDeadline, background }),
-    [topic, currentLevel, timePerDay, goalOrDeadline, background],
+    () => ({ topic, currentLevel, timePerDay, goalOrDeadline }),
+    [topic, currentLevel, timePerDay, goalOrDeadline],
   );
 
   function planDocumentText() {
@@ -63,7 +62,6 @@ export default function LearningPathPage() {
     lines.push(`Current level: ${safe(currentLevel)}`);
     lines.push(`Time per day: ${safe(timePerDay)}`);
     lines.push(`Goal/deadline: ${safe(goalOrDeadline) || '(not provided)'}`);
-    lines.push(`Background: ${safe(background) || '(not provided)'}`);
     lines.push('');
     lines.push(`Summary: ${safe(plan.summary)}`);
     if (plan.duration) lines.push(`Duration: ${safe(plan.duration)}`);
@@ -164,7 +162,7 @@ export default function LearningPathPage() {
       const response = await fetch('/api/learning-path/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, currentLevel, timePerDay, background, goalOrDeadline }),
+        body: JSON.stringify({ topic, currentLevel, timePerDay, goalOrDeadline }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Path Generation Error');
@@ -263,23 +261,12 @@ export default function LearningPathPage() {
                   </Field>
                 </div>
 
-                <Field label="Target Deadline">
+                <Field label="Output you are expecting">
                   <input
                     className="form-input-element"
                     value={goalOrDeadline}
                     onChange={(e) => setGoalOrDeadline(e.target.value)}
                     placeholder="e.g. Deployment in 14 days"
-                  />
-                </Field>
-
-                <Field label="Cognitive Context">
-                  <textarea 
-                    className="form-input-element"
-                    rows={3} 
-                    value={background} 
-                    onChange={(e) => setBackground(e.target.value)}
-                    placeholder="Describe current mastery level..."
-                    style={{ fontFamily: 'var(--font-mono)' }}
                   />
                 </Field>
 

@@ -230,3 +230,22 @@
   color: var(--text-muted);
   line-height: 1.5;
 }
+
+/* Task assignment team member rows */
+.team-member-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(160px, 1.2fr) minmax(220px, 1.8fr) 40px;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .team-member-row {
+    grid-template-columns: 1fr 1fr 40px;
+    grid-template-rows: auto auto;
+  }
+
+  .team-member-email {
+    grid-column: 1 / 3;
+  }
+}

@@ -99,7 +99,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.nav-dropdown:hover .nav-dropdown-content {
+.nav-dropdown-content.is-open {
   display: block;
 }
 

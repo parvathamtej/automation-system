@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, Users, Activity, Play, ClipboardList, Download, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, Users, Activity, Play, ClipboardList, Download, Plus, Trash2, Mail } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import './Workflow.css';
 
@@ -43,14 +43,12 @@ function downloadCsv({ filename, csv }) {
 }
 
 export default function TaskAssignmentPage() {
-  const [taskDescription, setTaskDescription] = useState(
-    'Ship the AI Incident Triage feature: analyze issue, show modal confirmation, raise ticket via email, and add basic telemetry.',
-  );
+  const [taskDescription, setTaskDescription] = useState('');
   const [deadline, setDeadline] = useState(() => new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
   const [teamMembers, setTeamMembers] = useState([
-    { name: 'Asha', role: 'Frontend (React)', email: 'asha@example.com' },
-    { name: 'Vikram', role: 'Backend (Node/API)', email: 'vikram@example.com' },
-    { name: 'Neha', role: 'QA / Testing', email: 'neha@example.com' },
+    { name: 'Likhitha', role: 'Frontend Developer', email: 'likhithakaruparthi1234@gmail.com' },
+    { name: 'Tej', role: 'Backend Developer', email: 'parvathamtej@gmail.com' },
+    { name: 'Sowmya', role: 'AI Developer', email: 'thv0322@gmail.com' },
   ]);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -181,7 +179,7 @@ export default function TaskAssignmentPage() {
                   rows={4}
                   value={taskDescription}
                   onChange={(e) => setTaskDescription(e.target.value)}
-                  placeholder="Describe what needs to be done..."
+                  placeholder="Example: Create a landing page for a company, add a contact form, and deploy it."
                   required
                   style={{ fontFamily: 'var(--font-mono)' }}
                 />
@@ -200,10 +198,30 @@ export default function TaskAssignmentPage() {
 
               <div style={{ display: 'grid', gap: '12px' }}>
                 {teamMembers.map((member, idx) => (
-                  <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr auto', gap: '10px', alignItems: 'center' }}>
-                    <input className="form-input-element" value={member.name} onChange={(e) => updateMember(idx, { name: e.target.value })} placeholder="Name" />
-                    <input className="form-input-element" value={member.role} onChange={(e) => updateMember(idx, { role: e.target.value })} placeholder="Role" />
-                    <input className="form-input-element" value={member.email} onChange={(e) => updateMember(idx, { email: e.target.value })} placeholder="Email" type="email" />
+                  <div key={idx} className="team-member-row">
+                    <input
+                      className="form-input-element"
+                      value={member.name}
+                      onChange={(e) => updateMember(idx, { name: e.target.value })}
+                      placeholder="Name"
+                      title={member.name}
+                    />
+                    <input
+                      className="form-input-element"
+                      value={member.role}
+                      onChange={(e) => updateMember(idx, { role: e.target.value })}
+                      placeholder="Role (e.g. Frontend)"
+                      title={member.role}
+                    />
+                    <input
+                      className="form-input-element team-member-email"
+                      value={member.email}
+                      onChange={(e) => updateMember(idx, { email: e.target.value })}
+                      placeholder="Email (e.g. dev@company.com)"
+                      type="email"
+                      title={member.email}
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                    />
                     <button type="button" className="icon-button" onClick={() => removeMember(idx)} aria-label="Remove member">
                       <Trash2 size={14} />
                     </button>
