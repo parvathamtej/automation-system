@@ -20,6 +20,19 @@ function firstNonEmptyList(...lists) {
   return [];
 }
 
+function uniqueEmails(list) {
+  const seen = new Set();
+  const out = [];
+  for (const item of Array.isArray(list) ? list : []) {
+    const email = normalizeString(item).toLowerCase();
+    if (!email) continue;
+    if (seen.has(email)) continue;
+    seen.add(email);
+    out.push(item);
+  }
+  return out;
+}
+
 function severityFromImpact(impact) {
   const normalized = normalizeString(impact).toLowerCase();
   if (normalized === 'severe') return 'high';
@@ -172,6 +185,44 @@ async function analyzeIncident(payload) {
   }
 }
 
+function inferOwnerDomain({ inputs, analysis }) {
+  const where = normalizeString(inputs?.where).toLowerCase();
+  const observed = normalizeString(inputs?.observedIssue).toLowerCase();
+  const what = normalizeString(inputs?.whatWentWrong).toLowerCase();
+  const text = `${where} ${observed} ${what} ${normalizeString(analysis?.root_cause).toLowerCase()} ${normalizeString(
+    analysis?.suggested_action,
+  ).toLowerCase()}`;
+
+  const isBackend =
+    where.includes('api') ||
+    where.includes('backend') ||
+    text.includes('endpoint') ||
+    text.includes('server') ||
+    text.includes('database') ||
+    text.includes('db') ||
+    text.includes('500') ||
+    text.includes('timeout') ||
+    text.includes('gateway');
+
+  const isFrontend =
+    where.includes('login') ||
+    where.includes('auth') ||
+    where.includes('dashboard') ||
+    text.includes('ui') ||
+    text.includes('frontend') ||
+    text.includes('react') ||
+    text.includes('render') ||
+    text.includes('browser') ||
+    text.includes('console');
+
+  if (isBackend && isFrontend) return 'both';
+  if (isBackend) return 'backend';
+  if (isFrontend) return 'frontend';
+
+  // Default: treat unknown as backend+frontend so nothing gets missed.
+  return 'both';
+}
+
 function buildTicketEmailBody({ inputs, analysis }) {
   return `AI INCIDENT TRIAGE TICKET
 
@@ -191,6 +242,30 @@ Severity: ${analysis.severity}
 `;
 }
 
+function buildDeveloperEmailBody({ inputs, analysis, domain }) {
+  const owner = String(domain || 'both').toUpperCase();
+  return `AI INCIDENT TRIAGE TICKET (ROUTED: ${owner})
+
+User report
+-----------
+What went wrong: ${inputs.whatWentWrong}
+Where: ${inputs.where}
+Observed issue: ${inputs.observedIssue}
+Impact: ${inputs.impact}
+
+AI summary
+----------
+Summary: ${analysis.summary}
+Likely root cause: ${analysis.root_cause}
+Suggested action / solution: ${analysis.suggested_action}
+Severity: ${analysis.severity}
+
+Notes
+-----
+This ticket was automatically routed to the ${owner} owner based on the reported domain + analysis signals.
+`;
+}
+
 function createTransportIfConfigured() {
   const enableSmtp = String(process.env.ENABLE_SMTP || '').trim().toLowerCase();
   if (enableSmtp === 'false' || enableSmtp === '0' || enableSmtp === 'no') {
@@ -207,18 +282,39 @@ function createTransportIfConfigured() {
   });
 }
 
+function recipientsForDomain(domain) {
+  const frontend = firstNonEmptyList(
+    normalizeEmails(process.env.FRONTEND_DEV_EMAIL),
+    normalizeEmails(process.env.FRONTEND_DEV_EMAILS),
+  );
+  const backend = firstNonEmptyList(
+    normalizeEmails(process.env.BACKEND_DEV_EMAIL),
+    normalizeEmails(process.env.BACKEND_DEV_EMAILS),
+  );
+
+  if (domain === 'frontend') return frontend;
+  if (domain === 'backend') return backend;
+  return uniqueEmails([...frontend, ...backend]);
+}
+
 async function raiseIncidentTicket({ inputs, analysis }) {
-  const recipients = firstNonEmptyList(
+  const domain = inferOwnerDomain({ inputs, analysis });
+
+  const routed = recipientsForDomain(domain);
+  const generalRecipients = firstNonEmptyList(
     normalizeEmails(process.env.DEV_TEAM_EMAIL),
     normalizeEmails(process.env.DEV_TEAM_EMAILS),
     normalizeEmails(process.env.EMAIL_TO),
   );
 
   const fallback = normalizeString(process.env.EMAIL_USER);
-  const toList = recipients.length ? recipients : fallback ? [fallback] : [];
+  const baseRecipients = routed.length ? routed : generalRecipients.length ? generalRecipients : fallback ? [fallback] : [];
+  const toList = uniqueEmails(baseRecipients);
 
-  const subject = `[Incident Triage] ${(analysis.severity || 'unknown').toUpperCase()} - ${inputs.where || 'Unknown module'}`;
-  const body = buildTicketEmailBody({ inputs, analysis });
+  const subject = `[Incident Triage][${String(domain || 'both').toUpperCase()}] ${(analysis.severity || 'unknown').toUpperCase()} - ${
+    inputs.where || 'Unknown module'
+  }`;
+  const body = buildDeveloperEmailBody({ inputs, analysis, domain });
 
   const transporter = createTransportIfConfigured();
   if (!transporter || !toList.length) {
@@ -228,9 +324,11 @@ async function raiseIncidentTicket({ inputs, analysis }) {
       provider: 'console',
       message: 'Ticket logged to server console (SMTP disabled/unconfigured).',
       to: toList.length ? toList.join(', ') : null,
+      domain,
     };
   }
 
+  console.log('[incident-triage] Sending routed ticket email.', { domain, to: toList.join(', '), subject });
   const startedAt = Date.now();
   const info = await transporter.sendMail({
     from: `"AI Workflow System" <${process.env.EMAIL_USER}>`,
@@ -248,6 +346,7 @@ async function raiseIncidentTicket({ inputs, analysis }) {
     accepted: info.accepted || [],
     rejected: info.rejected || [],
     to: toList.join(', '),
+    domain,
   };
 }
 

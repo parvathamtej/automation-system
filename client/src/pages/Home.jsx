@@ -26,12 +26,13 @@ const workflows = [
   },
 ];
 
-const NodeHighlight = ({ icon: Icon, label, value }) => (
+const NodeHighlight = ({ icon: Icon, label, value, detail }) => (
   <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--border-soft)', display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '160px' }}>
      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>
         <Icon size={14} /> {label}
      </div>
      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-strong)' }}>{value}</div>
+     {!!detail && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{detail}</div>}
   </div>
 );
 
@@ -83,10 +84,10 @@ export default function Home({ onNavigate }) {
 
         {/* Hero Content Addition per User Request (Filling the void) */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', animation: 'slideScaleUp 0.8s ease-out' }}>
-           <NodeHighlight icon={Cpu} label="Processing" value="Neural-V8" />
-           <NodeHighlight icon={Server} label="Latency" value="122ms" />
-           <NodeHighlight icon={Globe} label="Region" value="Distributed" />
-           <NodeHighlight icon={Code} label="Schema" value="JSON-LLM" />
+           <NodeHighlight icon={Cpu} label="Automations" value="3 Workflows" detail="Triage • Learning • Assignment" />
+           <NodeHighlight icon={Server} label="Actions" value="Email + Reports" detail="Tickets, assignments, confirmations" />
+           <NodeHighlight icon={Globe} label="Runtime" value="Local + Web" detail="Browser UI + Node /api server" />
+           <NodeHighlight icon={Code} label="Outputs" value="JSON + CSV" detail="Excel-ready task report export" />
         </div>
       </section>
 

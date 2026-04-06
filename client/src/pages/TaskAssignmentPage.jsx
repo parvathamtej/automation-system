@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, Users, Activity, Play, ClipboardList, Mail, Download, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, Users, Activity, Play, ClipboardList, Download, Plus, Trash2 } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import './Workflow.css';
 
@@ -60,7 +60,6 @@ export default function TaskAssignmentPage() {
   const [showModal, setShowModal] = useState(false);
   const [modalStep, setModalStep] = useState('report'); // report | success
   const [actionMessage, setActionMessage] = useState(null);
-  const [isSendingDev, setIsSendingDev] = useState(false);
 
   const inputs = useMemo(() => ({ taskDescription, deadline, teamMembers }), [taskDescription, deadline, teamMembers]);
   const canTrigger = useMemo(() => Boolean(taskDescription.trim() && teamMembers.some((m) => m.name && m.role && m.email)), [taskDescription, teamMembers]);
@@ -105,34 +104,13 @@ export default function TaskAssignmentPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Assignment dispatch failed');
-      setActionMessage(data?.message || 'Assignments created and emailed to the team.');
+      setActionMessage(data?.message || null);
       setModalStep('success');
       setShowModal(true);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
       setIsConfirming(false);
-    }
-  }
-
-  async function sendToDevelopers() {
-    if (!canConfirm) return;
-    setError(null);
-    setActionMessage(null);
-    setIsSendingDev(true);
-    try {
-      const response = await fetch('/api/task-assignment/email-dev-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputs, analysis }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data?.error || 'Could not send to developers');
-      setActionMessage(data?.message || 'Task report sent to developers.');
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setIsSendingDev(false);
     }
   }
 
@@ -263,16 +241,19 @@ export default function TaskAssignmentPage() {
                 <CheckCircle2 size={32} color="var(--success)" />
               </div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '12px' }}>Success</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '18px' }}>
-                {actionMessage || 'Task assignments have been created. Emails are triggered automatically.'}
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                The tasks have been assigned to their respective developers and a mail has been sent.
               </p>
+
+              {!!actionMessage && (
+                <div style={{ margin: '0 auto 16px', maxWidth: '560px', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-soft)', fontSize: '0.78rem' }}>
+                  {actionMessage}
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', maxWidth: '560px', margin: '0 auto' }}>
                 <button className="workflow-submit-btn" style={{ padding: '10px 24px', margin: 0, background: 'var(--success)' }} onClick={downloadExcel}>
                   <Download size={14} /> Download as Excel
-                </button>
-                <button className="workflow-submit-btn" style={{ padding: '10px 24px', margin: 0 }} disabled={isSendingDev} onClick={sendToDevelopers}>
-                  {isSendingDev ? <Activity className="animate-spin" size={12} /> : <Mail size={14} />} {isSendingDev ? 'Sending...' : 'Send to developers'}
                 </button>
                 <button className="workflow-submit-btn" style={{ padding: '10px 24px', margin: 0, background: 'rgba(255,255,255,0.08)' }} onClick={() => setShowModal(false)}>
                   Close
@@ -316,4 +297,3 @@ export default function TaskAssignmentPage() {
     </div>
   );
 }
-
