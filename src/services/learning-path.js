@@ -4,6 +4,22 @@ function normalizeString(value) {
   return String(value || '').trim();
 }
 
+function normalizeEmails(value) {
+  const raw = normalizeString(value);
+  if (!raw) return [];
+  return raw
+    .split(/[,;]+/g)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function firstNonEmptyList(...lists) {
+  for (const list of lists) {
+    if (Array.isArray(list) && list.length) return list;
+  }
+  return [];
+}
+
 function clampNumber(value, min, max, fallback) {
   const numberValue = Number(value);
   if (Number.isNaN(numberValue)) return fallback;
@@ -181,7 +197,8 @@ async function generateLearningPath(payload) {
 }
 
 function createTransportIfConfigured() {
-  if (String(process.env.ENABLE_SMTP || '').toLowerCase() !== 'true') {
+  const enableSmtp = String(process.env.ENABLE_SMTP || '').trim().toLowerCase();
+  if (enableSmtp === 'false' || enableSmtp === '0' || enableSmtp === 'no') {
     return null;
   }
 
@@ -235,8 +252,19 @@ ${daysText}
 `;
 }
 
+function buildPlanDocumentText({ inputs, plan }) {
+  return buildPlanEmailBody({ inputs, plan });
+}
+
 async function confirmLearningPath({ inputs, plan }) {
-  const to = normalizeString(process.env.DEV_TEAM_EMAIL) || normalizeString(process.env.EMAIL_USER);
+  const recipients = firstNonEmptyList(
+    normalizeEmails(process.env.DEV_TEAM_EMAIL),
+    normalizeEmails(process.env.DEV_TEAM_EMAILS),
+    normalizeEmails(process.env.EMAIL_TO),
+  );
+  const fallback = normalizeString(process.env.EMAIL_USER);
+  const toList = recipients.length ? recipients : fallback ? [fallback] : [];
+  const to = toList.join(', ');
   const subject = `[Learning Roadmap] Confirmed - ${
     normalizeString(inputs?.topic || inputs?.goal).slice(0, 64) || 'New plan'
   }`;
@@ -244,12 +272,12 @@ async function confirmLearningPath({ inputs, plan }) {
 
   const transporter = createTransportIfConfigured();
   if (!transporter || !to) {
-    console.log('[learning-path] Confirmation simulated (no SMTP configured).', { to, subject, body });
+    console.log('[learning-path] Confirmation simulated (SMTP disabled/unconfigured).', { to: toList, subject, body });
     return {
       status: 'simulated',
       provider: 'console',
-      message: 'Plan logged to server console (SMTP not configured).',
-      to: to || null,
+      message: 'Plan logged to server console (SMTP disabled/unconfigured).',
+      to: toList.length ? toList.join(', ') : null,
     };
   }
 
@@ -273,7 +301,52 @@ async function confirmLearningPath({ inputs, plan }) {
   };
 }
 
+async function emailLearningPlanToUser({ email, inputs, plan }) {
+  const to = normalizeString(email);
+  if (!to) throw new Error('Missing required field: email');
+
+  const subject = `[Learning Roadmap] ${normalizeString(inputs?.topic || inputs?.goal).slice(0, 64) || 'Your plan'}`;
+  const docText = buildPlanDocumentText({ inputs, plan });
+
+  const transporter = createTransportIfConfigured();
+  if (!transporter) {
+    console.log('[learning-path] User email simulated (SMTP disabled/unconfigured).', { to, subject, docText });
+    return {
+      status: 'simulated',
+      provider: 'console',
+      message: 'Email simulated (SMTP disabled/unconfigured).',
+      to,
+    };
+  }
+
+  const startedAt = Date.now();
+  const info = await transporter.sendMail({
+    from: `"AI Workflow System" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text: `Attached is your learning roadmap. You can start today.\n\nSummary:\n${normalizeString(plan?.summary)}\n`,
+    attachments: [
+      {
+        filename: 'learning-plan.txt',
+        content: docText,
+      },
+    ],
+  });
+
+  return {
+    status: 'sent',
+    provider: 'Gmail SMTP',
+    durationMs: clampNumber(Date.now() - startedAt, 0, 60_000, 0),
+    messageId: info.messageId,
+    response: info.response,
+    accepted: info.accepted || [],
+    rejected: info.rejected || [],
+    to,
+  };
+}
+
 module.exports = {
   generateLearningPath,
   confirmLearningPath,
+  emailLearningPlanToUser,
 };

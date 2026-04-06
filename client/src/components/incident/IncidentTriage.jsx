@@ -38,7 +38,8 @@ export default function IncidentTriage() {
   const [error, setError] = useState(null);
   const [isRaising, setIsRaising] = useState(false);
   const [ticketMessage, setTicketMessage] = useState(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [modalStep, setModalStep] = useState('analysis');
+  const [showModal, setShowModal] = useState(false);
 
   const canRaise = useMemo(() => Boolean(analysis?.summary && whatWentWrong.trim()), [analysis, whatWentWrong]);
 
@@ -46,6 +47,7 @@ export default function IncidentTriage() {
     event.preventDefault();
     setError(null);
     setAnalysis(null);
+    setTicketMessage(null);
     setIsAnalyzing(true);
     try {
       const response = await fetch('/api/incident-triage/analyze', {
@@ -56,6 +58,8 @@ export default function IncidentTriage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Analysis engine failure');
       setAnalysis(data);
+      setModalStep('analysis');
+      setShowModal(true);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -75,8 +79,12 @@ export default function IncidentTriage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Ticket dispatch failure');
-      setTicketMessage(data?.message);
-      setShowConfirmation(true);
+      setTicketMessage(
+        data?.message ||
+          "Your ticket has been raised and sent to the dev team. It will be resolved ASAP—thanks for your patience.",
+      );
+      setModalStep('success');
+      setShowModal(true);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -157,7 +165,7 @@ export default function IncidentTriage() {
 
                 <button type="submit" className="workflow-submit-btn" disabled={isAnalyzing}>
                   {isAnalyzing ? <Activity className="animate-spin" size={14} /> : <Play size={14} />}
-                  {isAnalyzing ? 'Analyzing Patterns...' : 'Execute Triage Engine'}
+                  {isAnalyzing ? 'Analyzing Patterns...' : 'Trigger Workflow'}
                 </button>
               </form>
 
@@ -167,54 +175,81 @@ export default function IncidentTriage() {
                 </div>
               )}
 
-              {analysis && (
-                <div className="results-preview-block" style={{ marginTop: '32px' }}>
-                  <div className="metric-strip" style={{ gap: '16px', padding: '12px' }}>
-                    <div className="metric-box">
-                      <span>Status</span>
-                      <strong style={{ fontSize: '0.9rem', color: 'var(--primary)' }}>DONE</strong>
-                    </div>
-                    <div className="metric-box">
-                      <span>Conf</span>
-                      <strong style={{ fontSize: '0.9rem' }}>94%</strong>
-                    </div>
-                  </div>
-
-                  <div className="result-card-inner" style={{ gap: '12px' }}>
-                    <div className="result-item" style={{ padding: '12px' }}>
-                      <span className="result-item-label">Summary</span>
-                      <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.summary}</p>
-                    </div>
-                    <div className="result-item" style={{ padding: '12px' }}>
-                      <span className="result-item-label">Likely Root Cause</span>
-                      <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.root_cause}</p>
-                    </div>
-                    <div className="result-item" style={{ padding: '12px', borderLeft: '2px solid var(--primary)' }}>
-                      <span className="result-item-label">Suggested Mitigation</span>
-                      <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.suggested_action}</p>
-                    </div>
-                  </div>
-
-                  <button type="button" className="workflow-submit-btn" style={{ background: 'var(--primary)', marginTop: '24px', width: '100%', fontSize: '0.75rem' }} disabled={!canRaise || isRaising} onClick={raiseTicket}>
-                    {isConfirming ? <Activity className="animate-spin" size={12} /> : <Play size={12} />}
-                    {isRaising ? 'Dispatching Signal...' : 'Notify Response Endpoint'}
-                  </button>
-                </div>
-              )}
            </div>
         </div>
       </div>
 
-      {showConfirmation && (
-        <Modal title="Workflow Termination" onClose={() => setShowConfirmation(false)}>
-          <div style={{ textAlign: 'center', padding: '24px' }}>
-            <div style={{ width: '60px', height: '60px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', display: 'grid', placeItems: 'center', margin: '0 auto 20px', border: '1px solid var(--success)' }}>
-              <CheckCircle2 size={32} color="var(--success)" />
+      {showModal && (
+        <Modal
+          title={modalStep === 'success' ? 'Ticket Raised' : 'Triage Report'}
+          onClose={() => {
+            setShowModal(false);
+            setModalStep('analysis');
+          }}
+        >
+          {modalStep === 'success' ? (
+            <div style={{ textAlign: 'center', padding: '24px' }}>
+              <div style={{ width: '60px', height: '60px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', display: 'grid', placeItems: 'center', margin: '0 auto 20px', border: '1px solid var(--success)' }}>
+                <CheckCircle2 size={32} color="var(--success)" />
+              </div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '12px' }}>Success</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                {ticketMessage || 'Your ticket has been raised and sent to the dev team. It will be resolved ASAP—thanks for your patience.'}
+              </p>
+              <button className="workflow-submit-btn" style={{ padding: '10px 24px', margin: '24px auto 0' }} onClick={() => setShowModal(false)}>
+                Close
+              </button>
             </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '12px' }}>Signal Dispatched</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ticketMessage || 'The incident signal has been successfully routed to the prioritized response endpoint.'}</p>
-            <button className="workflow-submit-btn" style={{ padding: '10px 24px', margin: '24px auto 0' }} onClick={() => setShowConfirmation(false)}>Acknowledge</button>
-          </div>
+          ) : (
+            <div className="results-preview-block" style={{ marginTop: 0 }}>
+              {!!error && (
+                <div style={{ marginBottom: '16px', padding: '16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '8px', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.72rem' }}>
+                  <strong>Engine Error:</strong> {error}
+                </div>
+              )}
+
+              <div className="metric-strip" style={{ gap: '16px', padding: '12px' }}>
+                <div className="metric-box">
+                  <span>Status</span>
+                  <strong style={{ fontSize: '0.9rem', color: 'var(--primary)' }}>DONE</strong>
+                </div>
+                <div className="metric-box">
+                  <span>Conf</span>
+                  <strong style={{ fontSize: '0.9rem' }}>94%</strong>
+                </div>
+              </div>
+
+              {analysis ? (
+                <div className="result-card-inner" style={{ gap: '12px' }}>
+                  <div className="result-item" style={{ padding: '12px' }}>
+                    <span className="result-item-label">Summary</span>
+                    <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.summary}</p>
+                  </div>
+                  <div className="result-item" style={{ padding: '12px' }}>
+                    <span className="result-item-label">Likely Root Cause</span>
+                    <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.root_cause}</p>
+                  </div>
+                  <div className="result-item" style={{ padding: '12px', borderLeft: '2px solid var(--primary)' }}>
+                    <span className="result-item-label">Suggested Mitigation</span>
+                    <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.suggested_action}</p>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ padding: '18px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No analysis available yet.</div>
+              )}
+
+              <button
+                type="button"
+                className="workflow-submit-btn"
+                style={{ background: 'var(--primary)', marginTop: '24px', width: '100%', fontSize: '0.75rem' }}
+                disabled={!canRaise || isRaising}
+                onClick={raiseTicket}
+              >
+                {isRaising ? <Activity className="animate-spin" size={12} /> : <Play size={12} />}
+                {isRaising ? 'Raising Ticket...' : 'Yes, raise a ticket'}
+              </button>
+            </div>
+          )}
         </Modal>
       )}
     </div>

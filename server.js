@@ -7,7 +7,7 @@ const fs = require('fs');
 const { workflowCatalog, scenarios } = require('./src/data/workflows');
 const { processWorkflow } = require('./workflow-runner');
 const { analyzeIncident, raiseIncidentTicket } = require('./src/services/incident-triage');
-const { generateLearningPath, confirmLearningPath } = require('./src/services/learning-path');
+const { generateLearningPath, confirmLearningPath, emailLearningPlanToUser } = require('./src/services/learning-path');
 const { analyzeSupportEscalation, confirmSupportEscalation } = require('./src/services/support-escalation');
 
 const app = express();
@@ -38,7 +38,7 @@ app.post('/api/simulate', async (req, res) => {
 
 app.post('/api/incident-triage/analyze', async (req, res) => {
   try {
-    const analysis = await analyzeIncident(req.body);
+    const analysis = await analyzeIncident(req.body?.inputs ? req.body.inputs : req.body);
     res.json(analysis);
   } catch (err) {
     console.error('Incident triage error:', err.message);
@@ -48,8 +48,8 @@ app.post('/api/incident-triage/analyze', async (req, res) => {
 
 app.post('/api/incident-triage/raise-ticket', async (req, res) => {
   try {
-    const inputs = req.body?.inputs || {};
-    const analysis = req.body?.analysis || {};
+    const inputs = req.body?.inputs || req.body || {};
+    const analysis = req.body?.analysis || req.body?.triage || {};
 
     if (!inputs.whatWentWrong) {
       res.status(400).json({ error: 'Missing required inputs.whatWentWrong' });
@@ -65,7 +65,8 @@ app.post('/api/incident-triage/raise-ticket', async (req, res) => {
     res.json({
       success: true,
       ticket,
-      message: 'Your ticket has been raised. Our development team is working on it.',
+      message:
+        'Your ticket has been raised and sent to the dev team. It will be resolved ASAP—thanks for your patience.',
     });
   } catch (err) {
     console.error('Raise ticket error:', err.message);
@@ -107,6 +108,39 @@ app.post('/api/learning-path/confirm', async (req, res) => {
   } catch (err) {
     console.error('Confirm learning path error:', err.message);
     res.status(500).json({ error: err.message || 'Could not confirm learning path' });
+  }
+});
+
+app.post('/api/learning-path/email-plan', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim();
+    const inputs = req.body?.inputs || {};
+    const plan = req.body?.plan || {};
+
+    if (!email || !email.includes('@')) {
+      res.status(400).json({ error: 'Missing or invalid email' });
+      return;
+    }
+
+    if (!inputs.topic && !inputs.goal) {
+      res.status(400).json({ error: 'Missing required inputs.topic' });
+      return;
+    }
+
+    if (!plan.summary || (!Array.isArray(plan.days) && !Array.isArray(plan.weeks))) {
+      res.status(400).json({ error: 'Missing required plan fields' });
+      return;
+    }
+
+    const ticket = await emailLearningPlanToUser({ email, inputs, plan });
+    res.json({
+      success: true,
+      ticket,
+      message: 'Plan sent to your email.',
+    });
+  } catch (err) {
+    console.error('Email learning plan error:', err.message);
+    res.status(500).json({ error: err.message || 'Could not email plan' });
   }
 });
 

@@ -4,6 +4,22 @@ function normalizeString(value) {
   return String(value || '').trim();
 }
 
+function normalizeEmails(value) {
+  const raw = normalizeString(value);
+  if (!raw) return [];
+  return raw
+    .split(/[,;]+/g)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function firstNonEmptyList(...lists) {
+  for (const list of lists) {
+    if (Array.isArray(list) && list.length) return list;
+  }
+  return [];
+}
+
 function severityFromImpact(impact) {
   const normalized = normalizeString(impact).toLowerCase();
   if (normalized === 'severe') return 'high';
@@ -73,11 +89,28 @@ function heuristicIncidentAnalysis({ whatWentWrong, where, observedIssue, impact
   };
 }
 
+function coerceInputs(payload) {
+  if (!payload || typeof payload !== 'object') return {};
+  if (payload.inputs && typeof payload.inputs === 'object') return payload.inputs;
+
+  if (payload.message && !payload.whatWentWrong) {
+    return {
+      whatWentWrong: payload.message,
+      where: payload.where,
+      observedIssue: payload.observedIssue,
+      impact: payload.impact,
+    };
+  }
+
+  return payload;
+}
+
 async function analyzeIncident(payload) {
-  const whatWentWrong = normalizeString(payload?.whatWentWrong);
-  const where = normalizeString(payload?.where);
-  const observedIssue = normalizeString(payload?.observedIssue);
-  const impact = normalizeString(payload?.impact);
+  const inputs = coerceInputs(payload);
+  const whatWentWrong = normalizeString(inputs?.whatWentWrong);
+  const where = normalizeString(inputs?.where);
+  const observedIssue = normalizeString(inputs?.observedIssue);
+  const impact = normalizeString(inputs?.impact);
 
   if (!whatWentWrong) {
     throw new Error('Missing required field: whatWentWrong');
@@ -159,7 +192,8 @@ Severity: ${analysis.severity}
 }
 
 function createTransportIfConfigured() {
-  if (String(process.env.ENABLE_SMTP || '').toLowerCase() !== 'true') {
+  const enableSmtp = String(process.env.ENABLE_SMTP || '').trim().toLowerCase();
+  if (enableSmtp === 'false' || enableSmtp === '0' || enableSmtp === 'no') {
     return null;
   }
 
@@ -174,25 +208,33 @@ function createTransportIfConfigured() {
 }
 
 async function raiseIncidentTicket({ inputs, analysis }) {
-  const to = normalizeString(process.env.DEV_TEAM_EMAIL) || normalizeString(process.env.EMAIL_USER);
-  const subject = `[Incident Triage] ${analysis.severity?.toUpperCase?.() || 'UNKNOWN'} - ${inputs.where || 'Unknown module'}`;
+  const recipients = firstNonEmptyList(
+    normalizeEmails(process.env.DEV_TEAM_EMAIL),
+    normalizeEmails(process.env.DEV_TEAM_EMAILS),
+    normalizeEmails(process.env.EMAIL_TO),
+  );
+
+  const fallback = normalizeString(process.env.EMAIL_USER);
+  const toList = recipients.length ? recipients : fallback ? [fallback] : [];
+
+  const subject = `[Incident Triage] ${(analysis.severity || 'unknown').toUpperCase()} - ${inputs.where || 'Unknown module'}`;
   const body = buildTicketEmailBody({ inputs, analysis });
 
   const transporter = createTransportIfConfigured();
-  if (!transporter || !to) {
-    console.log('[incident-triage] Ticket simulated (no SMTP configured).', { to, subject, body });
+  if (!transporter || !toList.length) {
+    console.log('[incident-triage] Ticket simulated (SMTP disabled/unconfigured).', { to: toList, subject, body });
     return {
       status: 'simulated',
       provider: 'console',
-      message: 'Ticket logged to server console (SMTP not configured).',
-      to: to || null,
+      message: 'Ticket logged to server console (SMTP disabled/unconfigured).',
+      to: toList.length ? toList.join(', ') : null,
     };
   }
 
   const startedAt = Date.now();
   const info = await transporter.sendMail({
     from: `"AI Workflow System" <${process.env.EMAIL_USER}>`,
-    to,
+    to: toList.join(', '),
     subject,
     text: body,
   });
@@ -205,7 +247,7 @@ async function raiseIncidentTicket({ inputs, analysis }) {
     response: info.response,
     accepted: info.accepted || [],
     rejected: info.rejected || [],
-    to,
+    to: toList.join(', '),
   };
 }
 

@@ -118,6 +118,79 @@ a {
   position: relative;
 }
 
+/* Modal / focus overlay */
+.focus-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 28px 18px;
+  background: rgba(3, 7, 18, 0.62);
+  backdrop-filter: blur(12px);
+}
+
+.focus-panel {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 56px);
+  overflow: auto;
+  border-radius: var(--radius-l);
+  border: 1px solid var(--border-strong);
+  background: rgba(17, 24, 39, 0.72);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+}
+
+.modal-header {
+  padding: 18px 18px 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-soft);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.modal-header h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-strong);
+}
+
+.icon-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.modal-body {
+  padding: 18px;
+}
+
 /* Base utility for high-density UI */
 .container-tight {
   max-width: 1000px;

@@ -40,7 +40,8 @@ export default function SupportEscalationPage() {
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [modalStep, setModalStep] = useState('report');
+  const [showModal, setShowModal] = useState(false);
 
   const canConfirm = useMemo(() => Boolean(analysis?.summary && message.trim()), [analysis, message]);
 
@@ -58,6 +59,8 @@ export default function SupportEscalationPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Analysis Engine Fault');
       setAnalysis(data);
+      setModalStep('report');
+      setShowModal(true);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -77,7 +80,8 @@ export default function SupportEscalationPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Escalation Failure');
-      setShowConfirmation(true);
+      setModalStep('success');
+      setShowModal(true);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -158,7 +162,7 @@ export default function SupportEscalationPage() {
 
                 <button type="submit" className="workflow-submit-btn" disabled={isAnalyzing} style={{ background: 'var(--success)' }}>
                   {isAnalyzing ? <Activity className="animate-spin" size={14} /> : <Send size={14} />}
-                  {isAnalyzing ? 'Evaluating Signal...' : 'Calculate Priority'}
+                  {isAnalyzing ? 'Evaluating Signal...' : 'Trigger Workflow'}
                 </button>
               </form>
 
@@ -168,16 +172,49 @@ export default function SupportEscalationPage() {
                 </div>
               )}
 
-              {analysis && (
-                <div className="results-preview-block" style={{ marginTop: '32px' }}>
-                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                      <div className="metric-box">
-                        <span>Status</span>
-                        <strong style={{ fontSize: '0.9rem', color: 'var(--success)' }}>ROUTED</strong>
-                      </div>
-                   </div>
+           </div>
+        </div>
+      </div>
+
+      {showModal && (
+        <Modal
+          title={modalStep === 'success' ? 'Escalation Raised' : 'Priority Report'}
+          onClose={() => {
+            setShowModal(false);
+            setModalStep('report');
+          }}
+        >
+          {modalStep === 'success' ? (
+            <div style={{ textAlign: 'center', padding: '24px' }}>
+              <div style={{ width: '60px', height: '60px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', display: 'grid', placeItems: 'center', margin: '0 auto 24px', border: '1px solid var(--success)' }}>
+                <Siren size={32} color="var(--success)" />
+              </div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '12px' }}>Success</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Your escalation has been raised and routed to the high-priority response team.
+              </p>
+              <button className="workflow-submit-btn" style={{ padding: '10px 24px', margin: '24px auto 0' }} onClick={() => setShowModal(false)}>
+                Close
+              </button>
+            </div>
+          ) : (
+            <div className="results-preview-block" style={{ marginTop: 0 }}>
+              {!!error && (
+                <div style={{ marginBottom: '16px', padding: '16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '8px', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.72rem' }}>
+                  <strong>Engine Error:</strong> {error}
+                </div>
+              )}
+
+              {analysis ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="metric-box">
+                      <span>Status</span>
+                      <strong style={{ fontSize: '0.9rem', color: 'var(--success)' }}>ROUTED</strong>
+                    </div>
+                  </div>
                   <p style={{ marginTop: '16px', fontSize: 'var(--font-size-s)', lineHeight: 1.7, opacity: 0.8, marginBottom: '24px' }}>{analysis.summary}</p>
-                  
+
                   <div className="result-card-inner" style={{ gap: '12px' }}>
                     <div className="result-item" style={{ padding: '12px' }}>
                       <span className="result-item-label">Recommended Route</span>
@@ -188,33 +225,23 @@ export default function SupportEscalationPage() {
                       <p className="result-item-content" style={{ fontSize: '0.75rem' }}>{analysis.suggested_action}</p>
                     </div>
                   </div>
-                  
-                  <button 
-                    type="button" 
-                    className="workflow-submit-btn" 
+
+                  <button
+                    type="button"
+                    className="workflow-submit-btn"
                     style={{ background: 'var(--primary)', marginTop: '24px', width: '100%', fontSize: '0.75rem' }}
-                    disabled={!canConfirm || isConfirming} 
+                    disabled={!canConfirm || isConfirming}
                     onClick={confirm}
                   >
                     {isConfirming ? <Activity className="animate-spin" size={12} /> : <Play size={12} />}
-                    {isConfirming ? 'Dispatching...' : 'Acknowledge Priority Signal'}
+                    {isConfirming ? 'Dispatching...' : 'Yes, raise escalation'}
                   </button>
-                </div>
+                </>
+              ) : (
+                <div style={{ padding: '18px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No analysis available yet.</div>
               )}
-           </div>
-        </div>
-      </div>
-
-      {showConfirmation && (
-        <Modal title="Signal Routing Protocol" onClose={() => setShowConfirmation(false)}>
-          <div style={{ textAlign: 'center', padding: '24px' }}>
-            <div style={{ width: '60px', height: '60px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', display: 'grid', placeItems: 'center', margin: '0 auto 24px', border: '1px solid var(--success)' }}>
-              <Siren size={32} color="var(--success)" />
             </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '12px' }}>Escalation Complete</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>The escalation signal has been successfully propagated to the High-Priority Response Cluster.</p>
-            <button className="workflow-submit-btn" style={{ padding: '10px 24px', margin: '24px auto 0' }} onClick={() => setShowConfirmation(false)}>End Session</button>
-          </div>
+          )}
         </Modal>
       )}
     </div>
