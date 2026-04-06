@@ -1,42 +1,48 @@
 import { useEffect, useState } from 'react';
-import AppChrome from './components/layout/AppChrome';
-import { ContextView } from './components/layout/Views';
-import BackgroundCanvas from './components/ui/BackgroundCanvas';
-import LandingPage from './pages/LandingPage';
-import Dashboard from './pages/Dashboard';
+import TopNav from './components/layout/TopNav';
+import Home from './pages/Home';
+import IncidentTriagePage from './pages/IncidentTriagePage';
+import LearningPathPage from './pages/LearningPathPage';
+import SupportEscalationPage from './pages/SupportEscalationPage';
 
 function App() {
-  const [currentView, setCurrentView] = useState('landing');
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') {
-      return 'light';
-    }
-
-    return window.localStorage.getItem('ui-theme') || 'light';
+  const [route, setRoute] = useState(() => {
+    if (typeof window === 'undefined') return 'home';
+    return window.location.hash?.replace('#', '') || 'home';
   });
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    window.localStorage.setItem('ui-theme', theme);
-  }, [theme]);
+    function handleHashChange() {
+      const next = window.location.hash?.replace('#', '') || 'home';
+      setRoute(next);
+    }
+
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange();
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  function navigate(nextRoute) {
+    window.location.hash = nextRoute === 'home' ? '' : `#${nextRoute}`;
+    setRoute(nextRoute);
+  }
+
+  const page =
+    route === 'incident' ? (
+      <IncidentTriagePage />
+    ) : route === 'learning' ? (
+      <LearningPathPage />
+    ) : route === 'support' ? (
+      <SupportEscalationPage />
+    ) : (
+      <Home onNavigate={navigate} />
+    );
 
   return (
-    <>
-      <BackgroundCanvas />
-      {currentView === 'landing' ? (
-        <LandingPage onLaunch={() => setCurrentView('dashboard')} />
-      ) : (
-        <AppChrome
-          onBackHome={() => setCurrentView('landing')}
-          theme={theme}
-          onToggleTheme={() => setTheme((value) => (value === 'light' ? 'dark' : 'light'))}
-        >
-          <ContextView>
-            <Dashboard />
-          </ContextView>
-        </AppChrome>
-      )}
-    </>
+    <div className="app">
+      <TopNav route={route} onNavigate={navigate} />
+      <main className="app-main">{page}</main>
+    </div>
   );
 }
 

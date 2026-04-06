@@ -6,6 +6,9 @@ const fs = require('fs');
 
 const { workflowCatalog, scenarios } = require('./src/data/workflows');
 const { processWorkflow } = require('./workflow-runner');
+const { analyzeIncident, raiseIncidentTicket } = require('./src/services/incident-triage');
+const { generateLearningPath, confirmLearningPath } = require('./src/services/learning-path');
+const { analyzeSupportEscalation, confirmSupportEscalation } = require('./src/services/support-escalation');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,6 +33,117 @@ app.post('/api/simulate', async (req, res) => {
   } catch (err) {
     console.error('Execution error:', err.message);
     res.status(500).json({ error: err.message || 'Execution failed' });
+  }
+});
+
+app.post('/api/incident-triage/analyze', async (req, res) => {
+  try {
+    const analysis = await analyzeIncident(req.body);
+    res.json(analysis);
+  } catch (err) {
+    console.error('Incident triage error:', err.message);
+    res.status(400).json({ error: err.message || 'Incident triage failed' });
+  }
+});
+
+app.post('/api/incident-triage/raise-ticket', async (req, res) => {
+  try {
+    const inputs = req.body?.inputs || {};
+    const analysis = req.body?.analysis || {};
+
+    if (!inputs.whatWentWrong) {
+      res.status(400).json({ error: 'Missing required inputs.whatWentWrong' });
+      return;
+    }
+
+    if (!analysis.summary || !analysis.root_cause || !analysis.suggested_action) {
+      res.status(400).json({ error: 'Missing required analysis fields' });
+      return;
+    }
+
+    const ticket = await raiseIncidentTicket({ inputs, analysis });
+    res.json({
+      success: true,
+      ticket,
+      message: 'Your ticket has been raised. Our development team is working on it.',
+    });
+  } catch (err) {
+    console.error('Raise ticket error:', err.message);
+    res.status(500).json({ error: err.message || 'Could not raise ticket' });
+  }
+});
+
+app.post('/api/learning-path/analyze', async (req, res) => {
+  try {
+    const plan = await generateLearningPath(req.body);
+    res.json(plan);
+  } catch (err) {
+    console.error('Learning path error:', err.message);
+    res.status(400).json({ error: err.message || 'Learning path failed' });
+  }
+});
+
+app.post('/api/learning-path/confirm', async (req, res) => {
+  try {
+    const inputs = req.body?.inputs || {};
+    const plan = req.body?.plan || {};
+
+    if (!inputs.topic && !inputs.goal) {
+      res.status(400).json({ error: 'Missing required inputs.topic' });
+      return;
+    }
+
+    if (!plan.summary || (!Array.isArray(plan.days) && !Array.isArray(plan.weeks))) {
+      res.status(400).json({ error: 'Missing required plan fields' });
+      return;
+    }
+
+    const confirmation = await confirmLearningPath({ inputs, plan });
+    res.json({
+      success: true,
+      confirmation,
+      message: 'Your learning path has been saved.',
+    });
+  } catch (err) {
+    console.error('Confirm learning path error:', err.message);
+    res.status(500).json({ error: err.message || 'Could not confirm learning path' });
+  }
+});
+
+app.post('/api/support-escalation/analyze', async (req, res) => {
+  try {
+    const analysis = await analyzeSupportEscalation(req.body);
+    res.json(analysis);
+  } catch (err) {
+    console.error('Support escalation error:', err.message);
+    res.status(400).json({ error: err.message || 'Support escalation failed' });
+  }
+});
+
+app.post('/api/support-escalation/confirm', async (req, res) => {
+  try {
+    const inputs = req.body?.inputs || {};
+    const analysis = req.body?.analysis || {};
+
+    if (!inputs.message) {
+      res.status(400).json({ error: 'Missing required inputs.message' });
+      return;
+    }
+
+    if (!analysis.summary || !analysis.recommended_route || !analysis.suggested_action) {
+      res.status(400).json({ error: 'Missing required analysis fields' });
+      return;
+    }
+
+    const confirmation = await confirmSupportEscalation({ inputs, analysis });
+    res.json({
+      success: true,
+      confirmation,
+      message: 'Escalation raised. Our support team is on it.',
+    });
+  } catch (err) {
+    console.error('Confirm support escalation error:', err.message);
+    res.status(500).json({ error: err.message || 'Could not confirm escalation' });
   }
 });
 

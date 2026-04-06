@@ -17,6 +17,7 @@ import { FocusView } from '../components/layout/Views';
 import PipelineVisualizer from '../components/simulator/PipelineVisualizer';
 import AIReasoningCard from '../components/simulator/AIReasoningCard';
 import EmailResultCard from '../components/simulator/EmailResultCard';
+import IncidentTriage from '../components/incident/IncidentTriage';
 
 const stepRevealDelay = 420;
 
@@ -256,6 +257,8 @@ export default function Dashboard() {
         <MetricCard accentIndex={1} title="Backend Visibility" value="100%" trend="up" trendValue="Proof surfaced" />
         <MetricCard accentIndex={2} title="Interaction Model" value="AI + Ops" trend="up" trendValue="Realtime view" />
       </section>
+
+      <IncidentTriage />
 
       <section className="registry-section">
         <div className="section-heading">
